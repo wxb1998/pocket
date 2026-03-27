@@ -1,4 +1,4 @@
-// 战斗界面渲染 - 左右对阵 + 阵型(前排/后排) + 像素精灵 + 伤害动画
+// 战斗界面渲染 - 上下对阵 + 阵型(前排/后排) + HP/ATK条 + 攻击动画
 import { SPECIES, SKILLS, ELEM_CHART, ZONES, CAPTURE_ITEMS } from '../constants/index.js';
 import { gameState, getFormationPets } from '../state.js';
 import { calcCaptureRate, attemptCapture, pauseBattle, resumeBattle } from '../systems/capture.js';
@@ -10,7 +10,7 @@ import { createSpriteElement, showDamageNumber } from './sprites.js';
 import { bindTooltip, skillTooltipHTML } from './tooltip.js';
 
 // === HP快照：用于检测HP变化并播放伤害动画 ===
-let _lastHpSnapshot = {}; // { 'a0': 1200, 'a1': 800, 'e0': 500, ... }
+let _lastHpSnapshot = {};
 
 function takeHpSnapshot() {
   const snap = {};
@@ -25,7 +25,6 @@ function takeHpSnapshot() {
 }
 
 function playDamageAnimations(oldSnap) {
-  // 延迟一帧等DOM渲染完毕
   requestAnimationFrame(() => {
     for (const key in oldSnap) {
       const oldHp = oldSnap[key];
@@ -39,33 +38,47 @@ function playDamageAnimations(oldSnap) {
         const enemy = gameState.enemies[idx];
         newHp = enemy ? enemy.currentHp : 0;
       }
-
       const diff = oldHp - newHp;
       if (diff === 0) continue;
-
       const el = document.querySelector('[data-unit-id="' + key + '"]');
       if (!el) continue;
-
       if (diff > 0) {
-        // 受伤 - 红色伤害数字 + 闪光
-        const isBigHit = diff > (oldHp * 0.3); // 大于30%HP算暴击级
+        const isBigHit = diff > (oldHp * 0.3);
         showDamageNumber(el, diff, isBigHit, false);
         el.classList.add('hit-flash');
         setTimeout(() => el.classList.remove('hit-flash'), 250);
       } else if (diff < 0) {
-        // 回复 - 绿色
         showDamageNumber(el, Math.abs(diff), false, true);
       }
     }
   });
 }
 
-// Capture item picker
+// === 攻击动作指示 ===
+function playAttackAnimations() {
+  const actions = gameState._battleActions;
+  if (!actions || actions.length === 0) return;
+  requestAnimationFrame(() => {
+    actions.forEach((act, i) => {
+      setTimeout(() => {
+        // 攻击者向前位移动画
+        const atkEl = document.querySelector('[data-unit-id="' + act.attackerId + '"]');
+        if (atkEl) {
+          const isEnemy = act.attackerId.startsWith('e');
+          atkEl.classList.add(isEnemy ? 'atk-anim-down' : 'atk-anim-up');
+          setTimeout(() => atkEl.classList.remove('atk-anim-down', 'atk-anim-up'), 300);
+        }
+      }, i * 100);
+    });
+  });
+  gameState._battleActions = [];
+}
+
+// === Capture item picker ===
 window._showCapturePicker = function(idx) {
   pauseBattle();
   const enemy = gameState.enemies[idx];
   if (!enemy || enemy.currentHp <= 0) { resumeBattle(); return; }
-
   let html = '<p>目标: <strong>' + enemy.displayName + '</strong> HP:' + enemy.currentHp + '/' + enemy.maxHp + '</p>';
   const items = ['rope', 'seal', 'soul_stone', 'fairy_lock'];
   items.forEach(itemId => {
@@ -101,7 +114,7 @@ export function renderZoneSelector() {
       gameState.enemies = spawnEnemies();
       gameState.captureMode = false;
       gameState.captureTargetIdx = -1;
-      _lastHpSnapshot = {}; // 切区域重置快照
+      _lastHpSnapshot = {};
       renderBattle();
       renderZoneSelector();
     };
@@ -116,82 +129,28 @@ export function renderBattle() {
   const battleArea = document.getElementById('battle-area');
   if (!battleArea) return;
 
-  // 先拍当前HP快照（用于和上帧对比）
   const currentSnap = takeHpSnapshot();
   const prevSnap = _lastHpSnapshot;
   _lastHpSnapshot = currentSnap;
 
   battleArea.innerHTML = '';
 
-  // === 左右对阵布局 ===
-  const allyPanel = document.createElement('div');
-  allyPanel.className = 'battle-team ally-team';
-  allyPanel.id = 'ally-side';
+  // === 上下对阵布局：敌方在上，己方在下 ===
 
-  const vsDiv = document.createElement('div');
-  vsDiv.className = 'battle-vs';
-  vsDiv.textContent = '⚔️';
-
+  // --- 敌方区域（上方）---
   const enemyPanel = document.createElement('div');
   enemyPanel.className = 'battle-team enemy-team';
-  enemyPanel.id = 'enemy-side';
 
-  // === 己方 - 前排(0-2) + 后排(3-5) ===
-  const allyFront = document.createElement('div');
-  allyFront.className = 'formation-row front-row';
-  const allyBack = document.createElement('div');
-  allyBack.className = 'formation-row back-row';
-
-  let allyCount = 0;
-  for (let i = 0; i < 6; i++) {
-    const pet = gameState.formation[i];
-    if (!pet) {
-      const empty = document.createElement('div');
-      empty.className = 'battle-unit-card empty-slot';
-      if (i < 3) allyFront.appendChild(empty);
-      else allyBack.appendChild(empty);
-      continue;
-    }
-    allyCount++;
-    const unit = createUnitCard(pet, i, false);
-    if (i < 3) allyFront.appendChild(unit);
-    else allyBack.appendChild(unit);
-  }
-
-  const allyLabel = document.createElement('div');
-  allyLabel.className = 'team-label';
-  allyLabel.textContent = '🛡️ 我方';
-  allyPanel.appendChild(allyLabel);
-
-  const allyFrontLabel = document.createElement('div');
-  allyFrontLabel.className = 'row-tag';
-  allyFrontLabel.textContent = '前排';
-  allyPanel.appendChild(allyFrontLabel);
-  allyPanel.appendChild(allyFront);
-
-  const hasBackRow = [3,4,5].some(i => gameState.formation[i]);
-  if (hasBackRow) {
-    const allyBackLabel = document.createElement('div');
-    allyBackLabel.className = 'row-tag';
-    allyBackLabel.textContent = '后排';
-    allyPanel.appendChild(allyBackLabel);
-    allyPanel.appendChild(allyBack);
-  }
-
-  if (allyCount === 0) {
-    allyPanel.innerHTML = '<p style="color:#666;padding:20px;text-align:center;">无上阵宠物</p>';
-  }
-
-  // === 敌方 - 前排 + 后排 ===
   const enemyLabel = document.createElement('div');
   enemyLabel.className = 'team-label enemy-label';
   enemyLabel.textContent = '👹 敌方';
   enemyPanel.appendChild(enemyLabel);
 
-  const enemyFront = document.createElement('div');
-  enemyFront.className = 'formation-row front-row';
+  // 敌方后排（最上面，远离中间）
   const enemyBack = document.createElement('div');
   enemyBack.className = 'formation-row back-row';
+  const enemyFront = document.createElement('div');
+  enemyFront.className = 'formation-row front-row';
 
   let hasEnemyBack = false;
   gameState.enemies.forEach((e, idx) => {
@@ -204,27 +163,82 @@ export function renderBattle() {
     }
   });
 
-  const eFrontLabel = document.createElement('div');
-  eFrontLabel.className = 'row-tag';
-  eFrontLabel.textContent = '前排';
-  enemyPanel.appendChild(eFrontLabel);
-  enemyPanel.appendChild(enemyFront);
   if (hasEnemyBack) {
-    const eBackLabel = document.createElement('div');
-    eBackLabel.className = 'row-tag';
-    eBackLabel.textContent = '后排';
-    enemyPanel.appendChild(eBackLabel);
+    const eBackTag = document.createElement('div');
+    eBackTag.className = 'row-tag';
+    eBackTag.textContent = '— 后排 —';
+    enemyPanel.appendChild(eBackTag);
     enemyPanel.appendChild(enemyBack);
   }
+  const eFrontTag = document.createElement('div');
+  eFrontTag.className = 'row-tag';
+  eFrontTag.textContent = '— 前排 —';
+  enemyPanel.appendChild(eFrontTag);
+  enemyPanel.appendChild(enemyFront);
 
-  battleArea.appendChild(allyPanel);
-  battleArea.appendChild(vsDiv);
+  // --- VS 分隔线 ---
+  const vsDiv = document.createElement('div');
+  vsDiv.className = 'battle-vs';
+  vsDiv.innerHTML = '⚔️ <span class="vs-text">VS</span> ⚔️';
+
+  // --- 己方区域（下方）---
+  const allyPanel = document.createElement('div');
+  allyPanel.className = 'battle-team ally-team';
+
+  // 己方前排（靠近中间）
+  const allyFront = document.createElement('div');
+  allyFront.className = 'formation-row front-row';
+  const allyBack = document.createElement('div');
+  allyBack.className = 'formation-row back-row';
+
+  let allyCount = 0;
+  for (let i = 0; i < 6; i++) {
+    const pet = gameState.formation[i];
+    if (!pet) {
+      const empty = document.createElement('div');
+      empty.className = 'battle-unit-card empty-slot';
+      if (i < 3) allyFront.appendChild(empty); else allyBack.appendChild(empty);
+      continue;
+    }
+    allyCount++;
+    const unit = createUnitCard(pet, i, false);
+    if (i < 3) allyFront.appendChild(unit); else allyBack.appendChild(unit);
+  }
+
+  if (allyCount === 0) {
+    allyPanel.innerHTML = '<p style="color:#666;padding:20px;text-align:center;">无上阵宠物</p>';
+  } else {
+    const aFrontTag = document.createElement('div');
+    aFrontTag.className = 'row-tag';
+    aFrontTag.textContent = '— 前排 —';
+    allyPanel.appendChild(aFrontTag);
+    allyPanel.appendChild(allyFront);
+
+    const hasBackRow = [3,4,5].some(i => gameState.formation[i]);
+    if (hasBackRow) {
+      const aBackTag = document.createElement('div');
+      aBackTag.className = 'row-tag';
+      aBackTag.textContent = '— 后排 —';
+      allyPanel.appendChild(aBackTag);
+      allyPanel.appendChild(allyBack);
+    }
+
+    const allyLabel = document.createElement('div');
+    allyLabel.className = 'team-label';
+    allyLabel.textContent = '🛡️ 我方';
+    allyPanel.appendChild(allyLabel);
+  }
+
+  // === 组装：敌上 → VS → 己下 ===
   battleArea.appendChild(enemyPanel);
+  battleArea.appendChild(vsDiv);
+  battleArea.appendChild(allyPanel);
 
-  // === 播放伤害/回复动画 ===
+  // === 播放动画 ===
   if (Object.keys(prevSnap).length > 0) {
     playDamageAnimations(prevSnap);
   }
+  playAttackAnimations();
 
   // === 战斗日志 ===
   const logEl = document.getElementById('battle-log');
@@ -239,6 +253,7 @@ export function renderBattle() {
   logEl.scrollTop = logEl.scrollHeight;
 }
 
+// === 单位卡片 ===
 function createUnitCard(unit, idx, isEnemy) {
   const div = document.createElement('div');
   const alive = unit.currentHp > 0;
@@ -249,14 +264,14 @@ function createUnitCard(unit, idx, isEnemy) {
   div.className = 'battle-unit-card' + (alive ? '' : ' dead') + (isEnemy ? ' enemy' : ' ally');
   div.dataset.unitId = isEnemy ? 'e' + idx : 'a' + idx;
 
-  // 像素精灵
+  // --- 像素精灵（更大：70px）---
   const spriteWrap = document.createElement('div');
   spriteWrap.className = 'unit-sprite-wrap';
-  const sprite = createSpriteElement(speciesId, 40, isEnemy);
+  const sprite = createSpriteElement(speciesId, 70, isEnemy);
   spriteWrap.appendChild(sprite);
   if (!alive) spriteWrap.style.opacity = '0.3';
 
-  // 信息区
+  // --- 信息区 ---
   const info = document.createElement('div');
   info.className = 'unit-info-panel';
 
@@ -266,32 +281,75 @@ function createUnitCard(unit, idx, isEnemy) {
   const stars = unit.stars || 0;
   const starHTML = stars > 0 ? '<span class="star-rating star-' + stars + '">' + '★'.repeat(stars) + '</span> ' : '';
   const elemName = ELEM_CHART[unit.elem] ? ELEM_CHART[unit.elem].name : '';
-  const displayName = isEnemy ? (unit.displayName || unit.name) : (sp.evoChain[unit.evoStage || 0] + ' Lv.' + unit.level);
+  const displayName = isEnemy
+    ? (unit.displayName || unit.name)
+    : (sp.evoChain[unit.evoStage || 0] + ' Lv.' + unit.level);
   nameRow.innerHTML = starHTML + '<span class="pet-elem elem-' + unit.elem + '">' + elemName + '</span> ' + displayName;
 
   // HP条
+  const hpBarWrap = document.createElement('div');
+  hpBarWrap.className = 'unit-bar-wrap';
+  const hpLabel = document.createElement('span');
+  hpLabel.className = 'bar-label hp-label';
+  hpLabel.textContent = 'HP';
   const hpBar = document.createElement('div');
   hpBar.className = 'unit-hp-bar';
   hpBar.innerHTML = '<div class="unit-hp-fill' + (hpPct < 30 ? ' low' : '') + '" style="width:' + hpPct + '%"></div>';
+  const hpText = document.createElement('span');
+  hpText.className = 'bar-text';
+  hpText.textContent = Math.max(0, Math.floor(unit.currentHp)) + '/' + unit.maxHp;
+  hpBarWrap.appendChild(hpLabel);
+  hpBarWrap.appendChild(hpBar);
+  hpBarWrap.appendChild(hpText);
 
-  const hpText = document.createElement('div');
-  hpText.className = 'unit-hp-text';
-  hpText.textContent = Math.max(0, unit.currentHp) + '/' + unit.maxHp;
+  // ATK蓄力条
+  const atkBarWrap = document.createElement('div');
+  atkBarWrap.className = 'unit-bar-wrap';
+  const atkLabel = document.createElement('span');
+  atkLabel.className = 'bar-label atk-label';
+  atkLabel.textContent = 'ATK';
+  const atkBar = document.createElement('div');
+  atkBar.className = 'unit-atk-bar';
+
+  let atkPct = 0;
+  let atkReady = false;
+  if (unit.skills && unit.skills.length > 0) {
+    const readySkills = unit.skills.filter(s => s.cooldownLeft <= 0);
+    if (readySkills.length > 0) {
+      atkPct = 100;
+      atkReady = true;
+    } else {
+      let minCD = 999, maxCD = 1;
+      unit.skills.forEach(s => {
+        const sd = SKILLS[s.skillId];
+        if (sd) {
+          if (s.cooldownLeft < minCD) { minCD = s.cooldownLeft; maxCD = sd.cooldown || 1; }
+        }
+      });
+      atkPct = Math.max(5, Math.floor((1 - minCD / Math.max(1, maxCD)) * 100));
+    }
+  } else {
+    atkPct = 100;
+    atkReady = true;
+  }
+  atkBar.innerHTML = '<div class="unit-atk-fill' + (atkReady ? ' ready' : '') + '" style="width:' + atkPct + '%"></div>';
+  atkBarWrap.appendChild(atkLabel);
+  atkBarWrap.appendChild(atkBar);
 
   info.appendChild(nameRow);
-  info.appendChild(hpBar);
-  info.appendChild(hpText);
+  info.appendChild(hpBarWrap);
+  info.appendChild(atkBarWrap);
 
-  // 技能（带tooltip）
-  if (!isEnemy && unit.skills && unit.skills.length > 0) {
+  // 技能图标行（小圆点，带tooltip）
+  if (unit.skills && unit.skills.length > 0) {
     const skillRow = document.createElement('div');
     skillRow.className = 'unit-skill-row';
     unit.skills.forEach(s => {
       const sd = SKILLS[s.skillId];
       if (!sd) return;
       const tag = document.createElement('span');
-      tag.className = 'skill-tag' + (s.cooldownLeft > 0 ? ' on-cd' : '');
-      tag.textContent = (s.cooldownLeft > 0 ? '⏳' : '✦') + sd.name;
+      tag.className = 'skill-dot' + (s.cooldownLeft > 0 ? ' on-cd' : '');
+      tag.textContent = s.cooldownLeft > 0 ? s.cooldownLeft : '✦';
       bindTooltip(tag, () => skillTooltipHTML(s.skillId));
       skillRow.appendChild(tag);
     });

@@ -270,6 +270,10 @@ function executeSkill(unit, skillSlot) {
     const logCls = unit.isEnemy ? 'log-enemy-dmg' : 'log-ally-dmg';
     const prefix = unit.isEnemy ? '【敌】' : '【我】';
     addLog(prefix + unit.name + ' 使用 ' + skillData.name + ' 对 ' + (target.displayName || target.name) + ' 造成 ' + result.damage + ' 伤害' + critText + elemText, logCls);
+    // 记录攻击动作（供UI动画）
+    const atkId = unit.isEnemy ? 'e' + gameState.enemies.indexOf(unit) : 'a' + gameState.formation.indexOf(unit);
+    const tgtId = target.isEnemy ? 'e' + gameState.enemies.indexOf(target) : 'a' + gameState.formation.indexOf(target);
+    if (gameState._battleActions) gameState._battleActions.push({ attackerId: atkId, targetId: tgtId });
 
     // 宝物被动: 吸血
     if (!unit.isEnemy && unit.treasure && unit.treasure.passive === 'lifesteal') {
@@ -331,6 +335,12 @@ function unitTakeTurn(unit) {
     const result = calcDamage(unit, target, { power: 50, elem: unit.elem, enhanceLevel: 0 });
     target.currentHp = Math.max(0, target.currentHp - result.damage);
     addLog('【敌】' + (unit.displayName || unit.name) + ' 攻击 ' + target.name + ' 造成 ' + result.damage + ' 伤害', 'log-enemy-dmg');
+    // 记录攻击动作
+    if (gameState._battleActions) {
+      const atkId = 'e' + gameState.enemies.indexOf(unit);
+      const tgtId = 'a' + gameState.formation.indexOf(target);
+      gameState._battleActions.push({ attackerId: atkId, targetId: tgtId });
+    }
     if (target.treasure && target.treasure.passive === 'thorns') {
       const th = Math.floor(result.damage * 0.1);
       unit.currentHp = Math.max(0, unit.currentHp - th);
@@ -351,6 +361,12 @@ function unitTakeTurn(unit) {
     const result = calcDamage(unit, target, { power: 45, elem: unit.elem, enhanceLevel: 0 });
     target.currentHp = Math.max(0, target.currentHp - result.damage);
     addLog('【我】' + unit.name + ' 普通攻击 ' + (target.displayName || target.name) + ' 造成 ' + result.damage + ' 伤害', 'log-ally-dmg');
+    // 记录攻击动作
+    if (gameState._battleActions) {
+      const atkId = 'a' + gameState.formation.indexOf(unit);
+      const tgtId = 'e' + gameState.enemies.indexOf(target);
+      gameState._battleActions.push({ attackerId: atkId, targetId: tgtId });
+    }
   }
   unit.skills.forEach(s => { if (s.cooldownLeft > 0) s.cooldownLeft--; });
 }
@@ -367,6 +383,8 @@ const RENDER_MIN_INTERVAL = 200; // ms
 
 export function battleTick() {
   if (gameState.enemies.length === 0) return;
+  // 每回合重置攻击动作记录（供UI播放攻击动画）
+  gameState._battleActions = [];
 
   // Check revival timers
   const now = Date.now();
