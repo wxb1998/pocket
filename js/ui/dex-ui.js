@@ -1,7 +1,7 @@
 // 图鉴 + 保留栏界面
 import { SPECIES, ELEM_CHART } from '../constants/index.js';
 import { gameState } from '../state.js';
-import { showModal, clamp, showToast } from '../utils.js';
+import { showModal, showToast } from '../utils.js';
 import { createPet } from '../systems/pet.js';
 import { renderHeader } from './header-ui.js';
 

@@ -49,7 +49,7 @@ export function renderPets() {
 
   gameState.pets.forEach(pet => {
     const sp = SPECIES[pet.speciesId];
-    const pers = PERSONALITIES[pet.personality];
+    const pers = PERSONALITIES[pet.personality] || {name:'未知', up:null, down:null};
     const inForm = gameState.formation.indexOf(pet) >= 0;
     const card = document.createElement('div');
     card.className = 'pet-card' + (inForm ? ' in-formation' : '');

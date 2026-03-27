@@ -106,8 +106,8 @@ export function spawnEnemies() {
       enemySkills.push({skillId: highSkill, enhanceLevel: 0, cooldownLeft: 0, priority: 2});
     }
 
-    // Boss gets extra skill and reduced cooldown
-    if (isBoss) {
+    // 3星怪（Boss级）技能冷却归零
+    if (stars >= 3) {
       enemySkills.forEach(s => s.cooldownLeft = 0);
     }
 
