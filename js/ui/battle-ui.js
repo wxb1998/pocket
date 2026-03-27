@@ -350,7 +350,7 @@ function createUnitCard(unit, idx, isEnemy) {
       const tag = document.createElement('span');
       tag.className = 'skill-dot' + (s.cooldownLeft > 0 ? ' on-cd' : '');
       tag.textContent = s.cooldownLeft > 0 ? s.cooldownLeft : '✦';
-      bindTooltip(tag, () => skillTooltipHTML(s.skillId));
+      bindTooltip(tag, () => skillTooltipHTML(s.skillId, s.enhanceLevel || 0));
       skillRow.appendChild(tag);
     });
     info.appendChild(skillRow);

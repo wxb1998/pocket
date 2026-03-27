@@ -59,23 +59,24 @@ export function createBoss(floor) {
     row: 'front',
     skills: [],
     buffDef: 0,
-    regen: 0
+    regen: 0,
+    statusEffects: []
   };
 
-  // 分配技能
+  // 分配技能（新4级系统）
   const skillPool = sp.skillPool;
-  if (skillPool.basic.length > 0) {
-    boss.skills.push({ skillId: pick(skillPool.basic), enhanceLevel: 0, cooldownLeft: 0, priority: 0 });
+  if (skillPool.common && skillPool.common.length > 0) {
+    boss.skills.push({ skillId: pick(skillPool.common), enhanceLevel: 0, cooldownLeft: 0, priority: 0 });
   }
-  if (lv >= 10 && skillPool.mid.length > 0) {
-    boss.skills.push({ skillId: pick(skillPool.mid), enhanceLevel: 0, cooldownLeft: 0, priority: 1 });
+  if (lv >= 10 && skillPool.fine && skillPool.fine.length > 0) {
+    boss.skills.push({ skillId: pick(skillPool.fine), enhanceLevel: 0, cooldownLeft: 0, priority: 1 });
   }
-  if (lv >= 20 && skillPool.mid.length > 1) {
-    const remaining = skillPool.mid.filter(s => !boss.skills.find(bs => bs.skillId === s));
+  if (lv >= 20 && skillPool.fine && skillPool.fine.length > 1) {
+    const remaining = skillPool.fine.filter(s => !boss.skills.find(bs => bs.skillId === s));
     if (remaining.length > 0) boss.skills.push({ skillId: pick(remaining), enhanceLevel: 0, cooldownLeft: 0, priority: 1 });
   }
-  if (lv >= 30 && skillPool.high.length > 0) {
-    boss.skills.push({ skillId: pick(skillPool.high), enhanceLevel: 0, cooldownLeft: 0, priority: 2 });
+  if (lv >= 30 && skillPool.rare && skillPool.rare.length > 0) {
+    boss.skills.push({ skillId: pick(skillPool.rare), enhanceLevel: 0, cooldownLeft: 0, priority: 2 });
   }
   // Boss技能冷却归零
   boss.skills.forEach(s => s.cooldownLeft = 0);
@@ -187,13 +188,26 @@ export function challengeFloor(floorId) {
       const skillData = skill ? SKILLS[skill.skillId] : null;
 
       if (skillData && skillData.type === 'self') {
-        if (skillData.effect === 'defUp' || skillData.effect === 'defUp2') {
-          unit.buffDef = skillData.effect === 'defUp2' ? 4 : 3;
-        } else if (skillData.effect === 'heal25' || skillData.effect === 'heal40') {
-          const pct = skillData.effect === 'heal40' ? 0.4 : 0.25;
-          unit.currentHp = Math.min(unit.maxHp, unit.currentHp + Math.floor(unit.maxHp * pct));
-        } else if (skillData.effect === 'regen') {
-          unit.regen = 4;
+        const eff = skillData.statusEffect;
+        if (eff) {
+          if (eff.type === 'heal') {
+            const base = eff.baseHeal || 0;
+            const atkBonus = (eff.atkRatio || 0) * (unit.atk || 50);
+            const hpBonus = (eff.hpRatio || 0) * (unit.maxHp || 500);
+            const h = Math.floor(base + atkBonus + hpBonus);
+            unit.currentHp = Math.min(unit.maxHp, unit.currentHp + h);
+          } else if (eff.type === 'shield') {
+            const defBonus = (eff.defRatio || 0) * (unit.def || 50);
+            const hpBonus2 = (eff.hpRatio || 0) * (unit.maxHp || 500);
+            // 简化：副本用buffDef近似护盾
+            unit.buffDef = Math.max(unit.buffDef || 0, eff.duration || 3);
+          } else if (eff.type === 'regen') {
+            unit.regen = eff.duration || 3;
+          } else if (eff.type === 'defUp') {
+            unit.buffDef = eff.duration || 3;
+          } else if (eff.type === 'atkUp' || eff.type === 'taunt') {
+            // 副本简化：忽略部分buff
+          }
         }
         if (skill) skill.cooldownLeft = skillData.cooldown || 0;
         if (unit.skills) unit.skills.forEach(s => { if (s.cooldownLeft > 0) s.cooldownLeft--; });

@@ -1,5 +1,5 @@
 // 通用悬浮提示系统 - PC hover / 移动端长按
-import { SKILLS, RUNE_SETS, RUNE_QUALITY, RUNE_SLOTS } from '../constants/index.js';
+import { SKILLS, GRADE_COLORS, GRADE_NAMES, STATUS_EFFECTS, RUNE_SETS, RUNE_QUALITY, RUNE_SLOTS } from '../constants/index.js';
 
 let _tooltipEl = null;
 
@@ -67,27 +67,41 @@ export function bindTooltip(el, content) {
 }
 
 /**
- * 生成技能tooltip HTML
+ * 生成技能tooltip HTML（新版：支持grade + statusEffect）
  */
-export function skillTooltipHTML(skillId) {
+export function skillTooltipHTML(skillId, enhanceLevel) {
   const s = SKILLS[skillId];
   if (!s) return '<p>未知技能</p>';
-  return '<div class="tip-title">' + s.name + '</div>'
-    + '<div class="tip-row">威力: ' + (s.power || '-') + '</div>'
-    + '<div class="tip-row">元素: ' + (s.elem || '普通') + '</div>'
-    + '<div class="tip-row">冷却: ' + (s.cooldown || 0) + '回合</div>'
-    + '<div class="tip-row">类型: ' + (s.type === 'self' ? '辅助' : s.type === 'aoe' ? '群攻' : '单体') + '</div>'
-    + (s.effect ? '<div class="tip-desc">' + describeEffect(s.effect) + '</div>' : '');
-}
 
-function describeEffect(eff) {
-  const map = {
-    defUp: '提升防御3回合', defUp2: '大幅提升防御4回合',
-    heal25: '回复25%最大HP', heal40: '回复40%最大HP',
-    healAll30: '全队回复30%HP', regen: '持续回复4回合',
-    debuffDef: '降低目标防御'
-  };
-  return map[eff] || eff;
+  const gradeColor = GRADE_COLORS[s.grade] || '#ccc';
+  const gradeName = GRADE_NAMES[s.grade] || '';
+  const typeMap = { single:'单体', aoe:'群攻', self:'自身', ally_single:'单体队友', ally_all:'全体队友', link:'联动' };
+  const typeName = typeMap[s.type] || s.type;
+
+  let html = '<div class="tip-title" style="color:' + gradeColor + ';">' + s.name;
+  if (enhanceLevel > 0) html += ' <span style="color:#ffab40;">+' + enhanceLevel + '</span>';
+  html += '</div>';
+  html += '<div class="tip-row" style="color:' + gradeColor + ';">[' + gradeName + '] ' + typeName + '</div>';
+  if (s.power > 0) html += '<div class="tip-row">威力: ' + s.power + '</div>';
+  html += '<div class="tip-row">元素: ' + (s.elem || '普通') + ' | 冷却: ' + (s.cooldown || 0) + '回合</div>';
+  if (s.desc) html += '<div class="tip-desc" style="color:#bbb;font-size:11px;margin-top:3px;">' + s.desc + '</div>';
+
+  // 状态效果详情
+  if (s.statusEffect) {
+    const se = s.statusEffect;
+    const meta = STATUS_EFFECTS[se.type];
+    if (meta) {
+      html += '<div class="tip-row" style="color:' + (meta.isDebuff ? '#ff6b6b' : '#69db7c') + ';">';
+      html += meta.icon + ' ' + meta.name;
+      if (se.baseChance) html += ' ' + Math.floor(se.baseChance * 100) + '%';
+      if (se.duration) html += ' ' + se.duration + '回合';
+      html += '</div>';
+    } else if (se.type === 'heal' || se.type === 'purify' || se.type === 'cleanse' || se.type === 'teamHeal' || se.type === 'cleanse_and_shield') {
+      html += '<div class="tip-row" style="color:#69db7c;">💚 ' + (s.desc || '回复/净化') + '</div>';
+    }
+  }
+
+  return html;
 }
 
 /**

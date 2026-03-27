@@ -175,19 +175,26 @@ function dungeonBattleTick() {
     const target = targetPool[randInt(0, targetPool.length - 1)];
     const skillData = skill ? SKILLS[skill.skillId] : null;
 
-    // 自身增益
+    // 自身增益（新statusEffect系统）
     if (skillData && skillData.type === 'self') {
-      if (skillData.effect === 'defUp' || skillData.effect === 'defUp2') {
-        unit.buffDef = skillData.effect === 'defUp2' ? 4 : 3;
-        log.push('R' + round + ' ' + unit.name + ' ' + skillData.name + ' 防御↑');
-      } else if (skillData.effect === 'heal25' || skillData.effect === 'heal40') {
-        const pct = skillData.effect === 'heal40' ? 0.4 : 0.25;
-        const h = Math.floor(unit.maxHp * pct);
-        unit.currentHp = Math.min(unit.maxHp, unit.currentHp + h);
-        log.push('R' + round + ' ' + unit.name + ' ' + skillData.name + ' +' + h + 'HP');
-      } else if (skillData.effect === 'regen') {
-        unit.regen = 4;
-        log.push('R' + round + ' ' + unit.name + ' ' + skillData.name + ' 持续回复');
+      const eff = skillData.statusEffect;
+      if (eff) {
+        if (eff.type === 'heal') {
+          const base = eff.baseHeal || 0;
+          const atkBonus = (eff.atkRatio || 0) * (unit.atk || 50);
+          const hpBonus = (eff.hpRatio || 0) * (unit.maxHp || 500);
+          const h = Math.floor(base + atkBonus + hpBonus);
+          unit.currentHp = Math.min(unit.maxHp, unit.currentHp + h);
+          log.push('R' + round + ' ' + unit.name + ' ' + skillData.name + ' +' + h + 'HP');
+        } else if (eff.type === 'regen') {
+          unit.regen = eff.duration || 3;
+          log.push('R' + round + ' ' + unit.name + ' ' + skillData.name + ' 持续回复');
+        } else if (eff.type === 'defUp' || eff.type === 'shield') {
+          unit.buffDef = eff.duration || 3;
+          log.push('R' + round + ' ' + unit.name + ' ' + skillData.name + ' 防御↑');
+        } else {
+          log.push('R' + round + ' ' + unit.name + ' ' + skillData.name);
+        }
       }
       if (skill) skill.cooldownLeft = skillData.cooldown || 0;
       if (unit.skills) unit.skills.forEach(s => { if (s.cooldownLeft > 0) s.cooldownLeft--; });
