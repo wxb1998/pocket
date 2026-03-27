@@ -244,3 +244,126 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 .dungeon-btn:hover { background:#ff6b6b; }
 .dungeon-btn:disabled { background:#444; cursor:not-allowed; color:#666; }
 .dungeon-log p { margin:2px 0; }
+
+/* ============================== */
+/* ===== Batch 3 新增样式 ===== */
+/* ============================== */
+
+/* ===== 战斗界面 - 左右对阵布局 ===== */
+#battle-area { display:flex; flex-direction:row; align-items:stretch; gap:0; }
+.battle-team { flex:1; display:flex; flex-direction:column; gap:6px; padding:8px; }
+.ally-team { align-items:flex-end; }
+.enemy-team { align-items:flex-start; }
+.battle-vs { display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; color:#e94560; padding:0 10px; text-shadow:0 0 8px rgba(233,69,96,0.5); min-width:40px; flex-shrink:0; }
+
+/* 单位卡片 */
+.battle-unit-card { display:flex; gap:8px; background:rgba(255,255,255,0.04); border-radius:8px; padding:8px; position:relative; transition:opacity 0.3s; border:1px solid rgba(255,255,255,0.06); max-width:300px; }
+.battle-unit-card.ally { flex-direction:row-reverse; text-align:right; }
+.battle-unit-card.enemy { flex-direction:row; text-align:left; }
+.battle-unit-card.dead { opacity:0.4; }
+.battle-unit-card.ally .unit-skill-row { justify-content:flex-end; }
+
+/* 精灵头像容器 */
+.unit-sprite-wrap { flex-shrink:0; display:flex; align-items:center; justify-content:center; width:52px; height:52px; background:rgba(0,0,0,0.2); border-radius:6px; overflow:hidden; }
+
+/* 信息面板 */
+.unit-info-panel { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.unit-name-row { font-size:12px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:4px; }
+.battle-unit-card.ally .unit-name-row { flex-direction:row-reverse; }
+.unit-hp-text { font-size:10px; color:#888; }
+.battle-unit-card.ally .unit-hp-text { text-align:right; }
+
+/* 技能行 */
+.unit-skill-row { display:flex; gap:3px; flex-wrap:wrap; margin-top:2px; }
+.skill-tag { font-size:10px; padding:1px 6px; background:rgba(233,69,96,0.12); border-radius:4px; color:#e94560; cursor:default; white-space:nowrap; transition:background 0.2s; }
+.skill-tag.on-cd { color:#666; background:rgba(255,255,255,0.04); }
+.skill-tag:hover { background:rgba(233,69,96,0.25); }
+
+/* ===== 像素精灵 ===== */
+.sprite-container { display:inline-block; image-rendering:pixelated; line-height:0; }
+.sprite-img { image-rendering:pixelated; display:block; }
+
+/* ===== 浮动伤害数字 ===== */
+.damage-number { position:absolute; top:0; left:50%; transform:translateX(-50%); font-size:14px; font-weight:bold; color:#f44336; pointer-events:none; z-index:20; animation:dmgFloat 0.8s ease-out forwards; white-space:nowrap; text-shadow:0 1px 3px rgba(0,0,0,0.7); }
+.damage-number.crit { font-size:18px; color:#ff9800; text-shadow:0 0 6px rgba(255,152,0,0.8); }
+.damage-number.heal { color:#4caf50; text-shadow:0 0 6px rgba(76,175,80,0.6); }
+@keyframes dmgFloat {
+  0% { opacity:1; transform:translateX(-50%) translateY(0); }
+  100% { opacity:0; transform:translateX(-50%) translateY(-30px); }
+}
+
+/* 被击闪光 */
+.hit-flash { animation:hitFlash 0.2s ease-out; }
+@keyframes hitFlash {
+  0% { filter:brightness(2.5); }
+  100% { filter:brightness(1); }
+}
+
+/* ===== Tooltip 悬浮提示 ===== */
+.game-tooltip { position:fixed; z-index:9999; background:#1a1a2e; border:1px solid #e94560; border-radius:8px; padding:10px 14px; max-width:280px; font-size:12px; line-height:1.5; color:#e0e0e0; pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,0.5); }
+.tip-title { font-size:13px; font-weight:bold; color:#e94560; margin-bottom:4px; border-bottom:1px solid rgba(233,69,96,0.2); padding-bottom:4px; }
+.tip-row { color:#ccc; padding:1px 0; }
+.tip-desc { margin-top:4px; color:#ff9800; font-size:11px; font-style:italic; }
+
+/* ===== 符文界面 - 工具栏 ===== */
+.rune-toolbar { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+.rune-pet-selector { display:flex; gap:4px; flex-wrap:wrap; }
+.pet-select-btn { padding:5px 10px; border:1px solid #333; background:#1a1a2e; color:#aaa; border-radius:6px; cursor:pointer; font-size:12px; transition:all .2s; white-space:nowrap; }
+.pet-select-btn:hover { border-color:#e94560; color:#e0e0e0; }
+.pet-select-btn.active { border-color:#e94560; color:#e94560; background:rgba(233,69,96,0.1); }
+.rune-sort-bar { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+.sort-btn { padding:4px 10px; border:1px solid #333; background:#1a1a2e; color:#aaa; border-radius:4px; cursor:pointer; font-size:11px; transition:all .2s; }
+.sort-btn:hover { border-color:#666; color:#e0e0e0; }
+.sort-btn.active { border-color:#e94560; color:#e94560; }
+
+/* ===== 符文装配面板 ===== */
+.equip-panel { background:rgba(255,255,255,0.03); border-radius:10px; padding:12px; }
+.equip-pet-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.06); }
+
+/* 6槽位网格 */
+.equip-slot-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+.equip-slot { background:rgba(255,255,255,0.04); border-radius:8px; padding:10px; text-align:center; min-height:90px; border:2px solid #333; cursor:pointer; transition:all .2s; position:relative; }
+.equip-slot:hover { border-color:#666; background:rgba(255,255,255,0.07); }
+.equip-slot.filled { border-style:solid; }
+.equip-slot.empty { border-style:dashed; }
+.slot-header { font-size:11px; color:#888; margin-bottom:4px; }
+.slot-set { font-size:12px; font-weight:bold; margin-bottom:2px; }
+.slot-main { font-size:14px; font-weight:bold; color:#ffca28; }
+.slot-level { font-size:11px; color:#e94560; margin-top:2px; }
+.slot-empty-text { font-size:12px; color:#555; margin:8px 0 4px; }
+.slot-empty-hint { font-size:10px; color:#444; }
+.slot-actions { display:flex; gap:4px; justify-content:center; margin-top:6px; }
+
+/* 套装效果面板 */
+.equip-set-panel { background:rgba(255,255,255,0.03); border-radius:8px; padding:10px; margin-bottom:8px; }
+.set-title { font-size:13px; font-weight:bold; color:#ce93d8; margin-bottom:4px; }
+.set-bonus { font-size:12px; padding:2px 0; }
+
+/* 属性总览 */
+.equip-stats-panel { background:rgba(255,255,255,0.03); border-radius:8px; padding:10px; }
+.stats-title { font-size:13px; font-weight:bold; color:#4caf50; margin-bottom:6px; }
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; font-size:12px; }
+.stats-grid span { background:rgba(255,255,255,0.05); padding:4px 6px; border-radius:4px; text-align:center; }
+
+/* 符文背包列表 */
+.rune-bag-list { display:flex; flex-direction:column; gap:6px; }
+.rune-card.selected { background:rgba(233,69,96,0.12); border:1px solid #e94560; }
+.pet-card.selected { background:rgba(233,69,96,0.12); border-color:#e94560; }
+.treasure-card.selected { background:rgba(233,69,96,0.12); }
+
+/* 批量操作底栏 */
+.batch-bar { position:sticky; bottom:0; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#16213e,#0f3460); border-radius:8px; padding:10px 14px; margin-top:8px; font-size:13px; border:1px solid rgba(233,69,96,0.3); }
+
+/* ===== 移动端适配 ===== */
+@media (max-width: 600px) {
+  #battle-area { flex-direction:column; }
+  .battle-vs { padding:4px 0; font-size:16px; min-width:auto; }
+  .ally-team, .enemy-team { align-items:stretch; }
+  .battle-unit-card { max-width:100%; }
+  .battle-unit-card.ally { flex-direction:row; text-align:left; }
+  .battle-unit-card.ally .unit-name-row { flex-direction:row; }
+  .battle-unit-card.ally .unit-skill-row { justify-content:flex-start; }
+  .battle-unit-card.ally .unit-hp-text { text-align:left; }
+  .equip-slot-grid { grid-template-columns:repeat(2,1fr); }
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+}

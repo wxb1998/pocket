@@ -1,4 +1,4 @@
-// 宠物列表 + 宠物详情
+// 宠物列表 + 宠物详情 + 排序 + 批量出售
 import { SPECIES, SKILLS, ELEM_CHART, PERSONALITIES, QUALITY_NAMES, TALENTS } from '../constants/index.js';
 import { gameState } from '../state.js';
 import { showModal, closeModal, showToast } from '../utils.js';
@@ -6,6 +6,12 @@ import { expForLevel, calcAllStats, getAptFromIV } from '../systems/pet.js';
 import { enhanceSkill } from '../systems/comprehend.js';
 import { equipTreasure } from '../systems/treasure.js';
 import { randInt } from '../utils.js';
+import { renderHeader } from './header-ui.js';
+
+let _petSortKey = 'level';
+let _petSortAsc = false;
+let _petBatchMode = false;
+let _petBatchSelected = new Set();
 
 // 暴露到 window 供 onclick 调用
 window._enhanceSkill = function(petId, skillIdx) {
@@ -37,6 +43,33 @@ window._useTalentFruit = function(petId, stat) {
   showPetDetail(pet);
 };
 
+window._batchSellPets = function() {
+  let totalGold = 0;
+  const ids = [..._petBatchSelected];
+  ids.forEach(id => {
+    const idx = gameState.pets.findIndex(p => p.id === id);
+    if (idx < 0) return;
+    const pet = gameState.pets[idx];
+    totalGold += pet.level * 10;
+    // 卸下宝物
+    if (pet.treasure) {
+      pet.treasure.equippedTo = null;
+    }
+    gameState.pets.splice(idx, 1);
+  });
+  gameState.gold += totalGold;
+  _petBatchSelected.clear();
+  _petBatchMode = false;
+  showToast('批量放生完成! 获得 ' + totalGold + ' 金币', 'loot');
+  renderPets();
+  renderHeader();
+};
+
+function getAptScore(pet) {
+  const aptVal = { D: 0, C: 1, B: 2, A: 3, S: 4, 'S+': 5 };
+  return (aptVal[pet.apts.hp] || 0) + (aptVal[pet.apts.atk] || 0) + (aptVal[pet.apts.def] || 0) + (aptVal[pet.apts.spd] || 0);
+}
+
 export function renderPets() {
   const el = document.getElementById('pet-list');
   if (!el) return;
@@ -47,12 +80,47 @@ export function renderPets() {
     return;
   }
 
-  gameState.pets.forEach(pet => {
+  // 排序+批量工具栏
+  const toolbar = document.createElement('div');
+  toolbar.className = 'rune-sort-bar';
+  toolbar.style.marginBottom = '10px';
+
+  [['level','等级'],['apt','资质'],['elem','元素']].forEach(([key, label]) => {
+    const btn = document.createElement('button');
+    btn.className = 'sort-btn' + (_petSortKey === key ? ' active' : '');
+    btn.textContent = label + (_petSortKey === key ? (_petSortAsc ? '↑' : '↓') : '');
+    btn.onclick = () => {
+      if (_petSortKey === key) _petSortAsc = !_petSortAsc;
+      else { _petSortKey = key; _petSortAsc = false; }
+      renderPets();
+    };
+    toolbar.appendChild(btn);
+  });
+
+  const batchBtn = document.createElement('button');
+  batchBtn.className = 'sort-btn' + (_petBatchMode ? ' active' : '');
+  batchBtn.textContent = _petBatchMode ? '取消批量' : '批量放生';
+  batchBtn.onclick = () => { _petBatchMode = !_petBatchMode; _petBatchSelected.clear(); renderPets(); };
+  toolbar.appendChild(batchBtn);
+
+  el.appendChild(toolbar);
+
+  // 排序
+  const pets = [...gameState.pets];
+  pets.sort((a, b) => {
+    let va, vb;
+    if (_petSortKey === 'level') { va = a.level; vb = b.level; }
+    else if (_petSortKey === 'apt') { va = getAptScore(a); vb = getAptScore(b); }
+    else { va = a.elem; vb = b.elem; if (va < vb) return _petSortAsc ? -1 : 1; if (va > vb) return _petSortAsc ? 1 : -1; return 0; }
+    return _petSortAsc ? va - vb : vb - va;
+  });
+
+  pets.forEach(pet => {
     const sp = SPECIES[pet.speciesId];
     const pers = PERSONALITIES[pet.personality] || {name:'未知', up:null, down:null};
     const inForm = gameState.formation.indexOf(pet) >= 0;
     const card = document.createElement('div');
-    card.className = 'pet-card' + (inForm ? ' in-formation' : '');
+    card.className = 'pet-card' + (inForm ? ' in-formation' : '') + (_petBatchSelected.has(pet.id) ? ' selected' : '');
 
     const expPct = (pet.exp / expForLevel(pet.level) * 100).toFixed(1);
 
@@ -83,7 +151,8 @@ export function renderPets() {
     const compText = '领悟: ' + pet.comprehensionCount + '/' + compMax;
 
     const icon = sp.icon || '';
-    card.innerHTML = '<div class="pet-header">'
+    card.innerHTML = (_petBatchMode ? '<input type="checkbox" ' + (_petBatchSelected.has(pet.id) ? 'checked' : '') + ' style="float:left;margin:4px 8px 0 0;pointer-events:none;">' : '')
+      + '<div class="pet-header">'
       + '<span class="pet-name">' + icon + ' ' + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level + '</span>'
       + '<span class="pet-elem elem-' + pet.elem + '">' + ELEM_CHART[pet.elem].name + '</span>'
       + '</div>'
@@ -95,9 +164,32 @@ export function renderPets() {
       + '<div class="exp-bar"><div class="exp-fill" style="width:' + expPct + '%"></div></div>'
       + '<div style="font-size:9px;color:#555;margin-top:2px;">EXP: ' + pet.exp + '/' + expForLevel(pet.level) + ' (' + expPct + '%)' + (inForm ? ' [出战中]' : '') + '</div>';
 
-    card.onclick = () => showPetDetail(pet);
+    if (_petBatchMode) {
+      card.onclick = () => {
+        if (inForm) { showToast('出战中的宠物不能放生', 'info'); return; }
+        if (_petBatchSelected.has(pet.id)) _petBatchSelected.delete(pet.id);
+        else _petBatchSelected.add(pet.id);
+        renderPets();
+      };
+    } else {
+      card.onclick = () => showPetDetail(pet);
+    }
     el.appendChild(card);
   });
+
+  // 批量操作底栏
+  if (_petBatchMode && _petBatchSelected.size > 0) {
+    let totalPrice = 0;
+    _petBatchSelected.forEach(id => {
+      const p = gameState.pets.find(pp => pp.id === id);
+      if (p) totalPrice += p.level * 10;
+    });
+    const batchBar = document.createElement('div');
+    batchBar.className = 'batch-bar';
+    batchBar.innerHTML = '<span>已选 ' + _petBatchSelected.size + ' 只</span>'
+      + '<button class="btn-sm" style="background:#e53935;color:#fff;" onclick="window._batchSellPets()">批量放生 (获得' + totalPrice + '金币)</button>';
+    el.appendChild(batchBar);
+  }
 }
 
 function showPetDetail(pet) {

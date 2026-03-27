@@ -1,4 +1,4 @@
-// 战斗界面渲染
+// 战斗界面渲染 - 左右对阵 + 像素精灵 + 动画
 import { SPECIES, SKILLS, ELEM_CHART, ZONES, CAPTURE_ITEMS } from '../constants/index.js';
 import { gameState, getFormationPets } from '../state.js';
 import { calcCaptureRate, attemptCapture, pauseBattle, resumeBattle } from '../systems/capture.js';
@@ -6,6 +6,8 @@ import { spawnEnemies } from '../systems/battle.js';
 import { renderHeader } from './header-ui.js';
 import { renderReserve } from './dex-ui.js';
 import { showModal, closeModal } from '../utils.js';
+import { createSpriteElement, showDamageNumber } from './sprites.js';
+import { bindTooltip, skillTooltipHTML } from './tooltip.js';
 
 // Capture item picker
 window._showCapturePicker = function(idx) {
@@ -14,23 +16,17 @@ window._showCapturePicker = function(idx) {
   if (!enemy || enemy.currentHp <= 0) { resumeBattle(); return; }
 
   let html = '<p>目标: <strong>' + enemy.displayName + '</strong> HP:' + enemy.currentHp + '/' + enemy.maxHp + '</p>';
-
   const items = ['rope', 'seal', 'soul_stone', 'fairy_lock'];
   items.forEach(itemId => {
     const item = CAPTURE_ITEMS[itemId];
-    const matKey = itemId;
-    const stock = gameState.materials[matKey] || 0;
+    const stock = gameState.materials[itemId] || 0;
     const rate = calcCaptureRate(enemy, itemId);
     const disabled = stock <= 0;
-
     html += '<div class="capture-item-row' + (disabled ? ' disabled' : '') + '" '
       + (disabled ? '' : 'onclick="window._confirmCapture(' + idx + ',\'' + itemId + '\')"') + '>'
-      + '<span style="color:' + item.color + ';font-weight:bold;">' + item.name + '</span>'
-      + ' - ' + item.desc
-      + '<span style="float:right;">成功率:' + Math.floor(rate) + '% | 库存:' + stock + '</span>'
-      + '</div>';
+      + '<span style="color:' + item.color + ';font-weight:bold;">' + item.name + '</span> - ' + item.desc
+      + '<span style="float:right;">成功率:' + Math.floor(rate) + '% | 库存:' + stock + '</span></div>';
   });
-
   showModal('选择捕捉道具', html, [{text:'取消', action: () => resumeBattle()}]);
 };
 
@@ -48,7 +44,6 @@ export function renderZoneSelector() {
     btn.className = 'zone-btn' + (idx === gameState.currentZone ? ' active' : '');
     btn.textContent = z.name + ' (Lv.' + z.lvRange[0] + '-' + z.lvRange[1] + ')';
     btn.disabled = gameState.advLv < z.unlockLv;
-    btn.title = z.desc + (gameState.advLv < z.unlockLv ? ' [需要冒险Lv.' + z.unlockLv + ']' : '');
     btn.onclick = () => {
       if (gameState.advLv < z.unlockLv) return;
       gameState.currentZone = idx;
@@ -66,81 +61,138 @@ export function renderBattle() {
   renderHeader();
   renderReserve();
 
-  // === 敌方 ===
-  const enemyEl = document.getElementById('enemy-side');
-  if (!enemyEl) return;
-  enemyEl.innerHTML = '';
-  const enemyCount = Math.max(3, gameState.enemies.length);
-  for (let i = 0; i < enemyCount; i++) {
-    const div = document.createElement('div');
-    if (i < gameState.enemies.length) {
-      const e = gameState.enemies[i];
-      const hpPct = Math.max(0, e.currentHp / e.maxHp * 100);
-      div.className = 'battle-unit ' + e.row;
-      let captureHTML = '';
-      if (e.currentHp > 0) {
-        captureHTML = '<button class="capture-btn" onclick="window._showCapturePicker(' + i + ')">✨捕捉</button>';
-      }
-      // Show star rating before name
-      const starDisplay = e.stars > 0 ? '<span class="star-rating star-' + e.stars + '">' + '★'.repeat(e.stars) + '</span> ' : '';
-      div.innerHTML = '<div class="unit-name">' + starDisplay + '<span class="pet-elem elem-' + e.elem + '">' + ELEM_CHART[e.elem].name + '</span> ' + e.displayName + '</div>'
-        + '<div class="unit-hp-bar"><div class="unit-hp-fill' + (hpPct < 30 ? ' low' : '') + '" style="width:' + hpPct + '%"></div></div>'
-        + '<div class="unit-info">HP:' + Math.max(0, e.currentHp) + '/' + e.maxHp + ' ATK:' + e.atk + ' SPD:' + e.spd + '</div>'
-        + captureHTML;
-    } else {
-      div.className = 'battle-unit empty';
-      div.innerHTML = '<div class="unit-info">---</div>';
-    }
-    enemyEl.appendChild(div);
-  }
+  const battleArea = document.getElementById('battle-area');
+  if (!battleArea) return;
+  battleArea.innerHTML = '';
+
+  // 左右对阵布局
+  const allyPanel = document.createElement('div');
+  allyPanel.className = 'battle-team ally-team';
+  allyPanel.id = 'ally-side';
+
+  const vsDiv = document.createElement('div');
+  vsDiv.className = 'battle-vs';
+  vsDiv.textContent = 'VS';
+
+  const enemyPanel = document.createElement('div');
+  enemyPanel.className = 'battle-team enemy-team';
+  enemyPanel.id = 'enemy-side';
 
   // === 己方 ===
-  const allyEl = document.getElementById('ally-side');
-  if (!allyEl) return;
-  allyEl.innerHTML = '';
   for (let i = 0; i < 6; i++) {
-    const div = document.createElement('div');
     const pet = gameState.formation[i];
-    if (pet) {
-      const hpPct = Math.max(0, pet.currentHp / pet.maxHp * 100);
-      const row = i < 3 ? 'front' : 'back';
-      div.className = 'battle-unit ' + row;
-      const sp = SPECIES[pet.speciesId];
-      const icon = sp.icon || '';
-
-      let reviveHTML = '';
-      if (pet.currentHp <= 0) {
-        const timer = gameState.reviveTimers ? gameState.reviveTimers[pet.id] : null;
-        if (timer) {
-          const remaining = Math.max(0, Math.ceil((timer - Date.now()) / 1000));
-          reviveHTML = '<div class="revive-timer">复活中... ' + remaining + 's</div>';
-        }
-      }
-
-      const skillText = pet.skills.map(s => {
-        const sd = SKILLS[s.skillId];
-        return (s.cooldownLeft > 0 ? '⏳' : '✦') + sd.name + (s.enhanceLevel > 0 ? '+' + s.enhanceLevel : '');
-      }).join(' | ');
-      div.innerHTML = '<div class="unit-name">' + icon + ' ' + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level + '</div>'
-        + '<div class="unit-hp-bar"><div class="unit-hp-fill' + (hpPct < 30 ? ' low' : '') + '" style="width:' + hpPct + '%"></div></div>'
-        + '<div class="unit-info">HP:' + pet.currentHp + '/' + pet.maxHp + ' ATK:' + pet.atk + ' DEF:' + pet.def + ' SPD:' + pet.spd + '</div>'
-        + (reviveHTML ? reviveHTML : '<div class="unit-info" style="margin-top:2px;color:#e94560;">' + (skillText || '无技能') + '</div>');
-    } else {
-      div.className = 'battle-unit empty';
-      div.innerHTML = '<div class="slot-label">' + (i < 3 ? '前排' : '后排') + '</div><div class="unit-info">空位</div>';
-    }
-    allyEl.appendChild(div);
+    if (!pet) continue;
+    const unit = createUnitCard(pet, i, false);
+    allyPanel.appendChild(unit);
   }
+  if (allyPanel.children.length === 0) {
+    allyPanel.innerHTML = '<p style="color:#666;padding:20px;">无上阵宠物</p>';
+  }
+
+  // === 敌方 ===
+  gameState.enemies.forEach((e, idx) => {
+    const unit = createUnitCard(e, idx, true);
+    enemyPanel.appendChild(unit);
+  });
+
+  battleArea.appendChild(allyPanel);
+  battleArea.appendChild(vsDiv);
+  battleArea.appendChild(enemyPanel);
 
   // === 战斗日志 ===
   const logEl = document.getElementById('battle-log');
   if (!logEl) return;
   logEl.innerHTML = '';
-  gameState.battleLog.slice(-30).forEach(l => {
+  gameState.battleLog.slice(-20).forEach(l => {
     const line = document.createElement('div');
     line.className = 'log-line ' + l.cls;
     line.textContent = l.msg;
     logEl.appendChild(line);
   });
   logEl.scrollTop = logEl.scrollHeight;
+}
+
+function createUnitCard(unit, idx, isEnemy) {
+  const div = document.createElement('div');
+  const alive = unit.currentHp > 0;
+  const hpPct = Math.max(0, unit.currentHp / unit.maxHp * 100);
+  const speciesId = unit.speciesId || 'hundun';
+  const sp = SPECIES[speciesId];
+
+  div.className = 'battle-unit-card' + (alive ? '' : ' dead') + (isEnemy ? ' enemy' : ' ally');
+  div.dataset.unitId = isEnemy ? 'e' + idx : 'a' + idx;
+
+  // 像素精灵
+  const spriteWrap = document.createElement('div');
+  spriteWrap.className = 'unit-sprite-wrap';
+  const sprite = createSpriteElement(speciesId, 48, isEnemy);
+  spriteWrap.appendChild(sprite);
+  if (!alive) spriteWrap.style.opacity = '0.3';
+
+  // 信息区
+  const info = document.createElement('div');
+  info.className = 'unit-info-panel';
+
+  // 名称行
+  const nameRow = document.createElement('div');
+  nameRow.className = 'unit-name-row';
+  const stars = unit.stars || 0;
+  const starHTML = stars > 0 ? '<span class="star-rating star-' + stars + '">' + '★'.repeat(stars) + '</span> ' : '';
+  const elemName = ELEM_CHART[unit.elem] ? ELEM_CHART[unit.elem].name : '';
+  const displayName = isEnemy ? (unit.displayName || unit.name) : (sp.evoChain[unit.evoStage || 0] + ' Lv.' + unit.level);
+  nameRow.innerHTML = starHTML + '<span class="pet-elem elem-' + unit.elem + '">' + elemName + '</span> ' + displayName;
+
+  // HP条
+  const hpBar = document.createElement('div');
+  hpBar.className = 'unit-hp-bar';
+  hpBar.innerHTML = '<div class="unit-hp-fill' + (hpPct < 30 ? ' low' : '') + '" style="width:' + hpPct + '%"></div>';
+
+  const hpText = document.createElement('div');
+  hpText.className = 'unit-hp-text';
+  hpText.textContent = Math.max(0, unit.currentHp) + '/' + unit.maxHp;
+
+  info.appendChild(nameRow);
+  info.appendChild(hpBar);
+  info.appendChild(hpText);
+
+  // 技能（带tooltip）
+  if (!isEnemy && unit.skills && unit.skills.length > 0) {
+    const skillRow = document.createElement('div');
+    skillRow.className = 'unit-skill-row';
+    unit.skills.forEach(s => {
+      const sd = SKILLS[s.skillId];
+      if (!sd) return;
+      const tag = document.createElement('span');
+      tag.className = 'skill-tag' + (s.cooldownLeft > 0 ? ' on-cd' : '');
+      tag.textContent = (s.cooldownLeft > 0 ? '⏳' : '✦') + sd.name;
+      bindTooltip(tag, () => skillTooltipHTML(s.skillId));
+      skillRow.appendChild(tag);
+    });
+    info.appendChild(skillRow);
+  }
+
+  // 复活计时器
+  if (!isEnemy && !alive && unit.id) {
+    const timer = gameState.reviveTimers ? gameState.reviveTimers[unit.id] : null;
+    if (timer) {
+      const remaining = Math.max(0, Math.ceil((timer - Date.now()) / 1000));
+      const revDiv = document.createElement('div');
+      revDiv.className = 'revive-timer';
+      revDiv.textContent = '复活中... ' + remaining + 's';
+      info.appendChild(revDiv);
+    }
+  }
+
+  // 捕捉按钮（敌方）
+  if (isEnemy && alive) {
+    const capBtn = document.createElement('button');
+    capBtn.className = 'capture-btn';
+    capBtn.textContent = '✨捕捉';
+    capBtn.onclick = (e) => { e.stopPropagation(); window._showCapturePicker(idx); };
+    info.appendChild(capBtn);
+  }
+
+  div.appendChild(spriteWrap);
+  div.appendChild(info);
+  return div;
 }
