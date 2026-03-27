@@ -19,6 +19,13 @@ let _runeFilterSet = 'all';      // all | setId
 let _runeFilterSlot = 'all';     // all | 0-5
 let _runeFilterEquip = 'all';    // all | equipped | unequipped
 
+// 防抖渲染：防止快速连点筛选按钮导致卡死
+let _runeRenderRAF = 0;
+function scheduleRenderRunes() {
+  if (_runeRenderRAF) cancelAnimationFrame(_runeRenderRAF);
+  _runeRenderRAF = requestAnimationFrame(() => { _runeRenderRAF = 0; renderRunes(); });
+}
+
 export function renderRunes() {
   const el = document.getElementById('rune-list');
   if (!el) return;
@@ -34,7 +41,7 @@ export function renderRunes() {
   const noneBtn = document.createElement('button');
   noneBtn.className = 'pet-select-btn' + (!_selectedPetId ? ' active' : '');
   noneBtn.textContent = '📦 全部符文';
-  noneBtn.onclick = () => { _selectedPetId = null; renderRunes(); };
+  noneBtn.onclick = () => { _selectedPetId = null; scheduleRenderRunes(); };
   petSelect.appendChild(noneBtn);
 
   gameState.pets.forEach(pet => {
@@ -42,7 +49,7 @@ export function renderRunes() {
     const btn = document.createElement('button');
     btn.className = 'pet-select-btn' + (_selectedPetId === pet.id ? ' active' : '');
     btn.textContent = (sp.icon || '') + ' ' + pet.name;
-    btn.onclick = () => { _selectedPetId = pet.id; renderRunes(); };
+    btn.onclick = () => { _selectedPetId = pet.id; scheduleRenderRunes(); };
     petSelect.appendChild(btn);
   });
 
@@ -56,7 +63,7 @@ export function renderRunes() {
     btn.onclick = () => {
       if (_sortKey === key) _sortAsc = !_sortAsc;
       else { _sortKey = key; _sortAsc = false; }
-      renderRunes();
+      scheduleRenderRunes();
     };
     sortBar.appendChild(btn);
   });
@@ -65,14 +72,14 @@ export function renderRunes() {
   const batchSellBtn = document.createElement('button');
   batchSellBtn.className = 'sort-btn' + (_batchMode === 'sell' ? ' active' : '');
   batchSellBtn.textContent = _batchMode === 'sell' ? '取消批量' : '批量出售';
-  batchSellBtn.onclick = () => { _batchMode = _batchMode === 'sell' ? false : 'sell'; _batchSelected.clear(); renderRunes(); };
+  batchSellBtn.onclick = () => { _batchMode = _batchMode === 'sell' ? false : 'sell'; _batchSelected.clear(); scheduleRenderRunes(); };
   sortBar.appendChild(batchSellBtn);
 
   // 批量强化按钮
   const batchEnhBtn = document.createElement('button');
   batchEnhBtn.className = 'sort-btn' + (_batchMode === 'enhance' ? ' active' : '');
   batchEnhBtn.textContent = _batchMode === 'enhance' ? '取消批量' : '批量强化';
-  batchEnhBtn.onclick = () => { _batchMode = _batchMode === 'enhance' ? false : 'enhance'; _batchSelected.clear(); renderRunes(); };
+  batchEnhBtn.onclick = () => { _batchMode = _batchMode === 'enhance' ? false : 'enhance'; _batchSelected.clear(); scheduleRenderRunes(); };
   sortBar.appendChild(batchEnhBtn);
 
   toolbar.appendChild(petSelect);
@@ -91,7 +98,7 @@ export function renderRunes() {
       btn.className = 'skill-filter-btn' + (_runeFilterQuality === key ? ' active' : '');
       btn.textContent = label;
       if (qualData) btn.style.borderColor = qualData.color;
-      btn.onclick = () => { _runeFilterQuality = key; renderRunes(); };
+      btn.onclick = () => { _runeFilterQuality = key; scheduleRenderRunes(); };
       filterBar.appendChild(btn);
     });
 
@@ -106,7 +113,7 @@ export function renderRunes() {
       const btn = document.createElement('button');
       btn.className = 'skill-filter-btn' + (_runeFilterEquip === key ? ' active' : '');
       btn.textContent = label;
-      btn.onclick = () => { _runeFilterEquip = key; renderRunes(); };
+      btn.onclick = () => { _runeFilterEquip = key; scheduleRenderRunes(); };
       filterBar.appendChild(btn);
     });
 
@@ -123,7 +130,7 @@ export function renderRunes() {
       const btn = document.createElement('button');
       btn.className = 'skill-filter-btn' + (_runeFilterSlot === key ? ' active' : '');
       btn.textContent = label;
-      btn.onclick = () => { _runeFilterSlot = key; renderRunes(); };
+      btn.onclick = () => { _runeFilterSlot = key; scheduleRenderRunes(); };
       filterBar.appendChild(btn);
     });
 
@@ -155,7 +162,7 @@ export function renderRunes() {
       const clearBtn = document.createElement('button');
       clearBtn.className = 'btn-sm';
       clearBtn.textContent = '清空选择';
-      clearBtn.onclick = () => { _batchSelected.clear(); renderRunes(); };
+      clearBtn.onclick = () => { _batchSelected.clear(); scheduleRenderRunes(); };
       quickBar.appendChild(clearBtn);
       toolbar.appendChild(quickBar);
     }
@@ -337,7 +344,10 @@ function getFilteredRunes() {
 function renderRuneBag(container) {
   const allRunes = gameState.runes || [];
   if (allRunes.length === 0) {
-    container.innerHTML += '<p style="color:#666;text-align:center;padding:20px;">暂无符文，去副本挑战获取吧!</p>';
+    const emptyMsg = document.createElement('p');
+    emptyMsg.style.cssText = 'color:#666;text-align:center;padding:20px;';
+    emptyMsg.textContent = '暂无符文，去副本挑战获取吧!';
+    container.appendChild(emptyMsg);
     return;
   }
 
@@ -354,7 +364,10 @@ function renderRuneBag(container) {
   });
 
   if (runes.length === 0) {
-    container.innerHTML += '<p style="color:#555;text-align:center;padding:12px;">没有匹配的符文 (共' + allRunes.length + '个)</p>';
+    const emptyMsg = document.createElement('p');
+    emptyMsg.style.cssText = 'color:#555;text-align:center;padding:12px;';
+    emptyMsg.textContent = '没有匹配的符文 (共' + allRunes.length + '个)';
+    container.appendChild(emptyMsg);
     return;
   }
 

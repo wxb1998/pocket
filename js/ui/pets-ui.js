@@ -16,6 +16,13 @@ let _petFilterApt = 'all';    // all | Sp | S | A | B
 let _petFilterForm = 'all';   // all | inForm | notInForm
 let _skillBookFilter = 'all'; // all | common | fine | rare | legend | equipped | unequipped
 
+// 防抖渲染：防止快速连点筛选按钮导致卡死
+let _petRenderRAF = 0;
+function scheduleRenderPets() {
+  if (_petRenderRAF) cancelAnimationFrame(_petRenderRAF);
+  _petRenderRAF = requestAnimationFrame(() => { _petRenderRAF = 0; renderPets(); });
+}
+
 // 暴露到 window 供 onclick 调用
 
 // 装备技能：bookIdx→slotIdx，slotIdx=-1表示自动
@@ -100,7 +107,7 @@ window._setPetFilter = function(type, value) {
   if (type === 'elem') _petFilterElem = value;
   else if (type === 'apt') _petFilterApt = value;
   else if (type === 'form') _petFilterForm = value;
-  renderPets();
+  scheduleRenderPets();
 };
 
 // 批量快选：按当前筛选条件全选/全不选
@@ -114,7 +121,7 @@ window._batchSelectFiltered = function() {
       if (gameState.formation.indexOf(p) < 0) _petBatchSelected.add(p.id);
     });
   }
-  renderPets();
+  scheduleRenderPets();
 };
 
 // 按资质快速全选低级宠物
@@ -126,7 +133,7 @@ window._batchSelectLowApt = function(maxGrade) {
     const score = getAptScore(p);
     if (score <= threshold * 4) _petBatchSelected.add(p.id);
   });
-  renderPets();
+  scheduleRenderPets();
 };
 
 window._batchSellPets = function() {
@@ -193,7 +200,7 @@ export function renderPets() {
     btn.onclick = () => {
       if (_petSortKey === key) _petSortAsc = !_petSortAsc;
       else { _petSortKey = key; _petSortAsc = false; }
-      renderPets();
+      scheduleRenderPets();
     };
     sortBar.appendChild(btn);
   });
@@ -201,7 +208,7 @@ export function renderPets() {
   const batchBtn = document.createElement('button');
   batchBtn.className = 'sort-btn' + (_petBatchMode ? ' active' : '');
   batchBtn.textContent = _petBatchMode ? '取消批量' : '批量放生';
-  batchBtn.onclick = () => { _petBatchMode = !_petBatchMode; _petBatchSelected.clear(); renderPets(); };
+  batchBtn.onclick = () => { _petBatchMode = !_petBatchMode; _petBatchSelected.clear(); scheduleRenderPets(); };
   sortBar.appendChild(batchBtn);
   el.appendChild(sortBar);
 
@@ -219,7 +226,7 @@ export function renderPets() {
     const btn = document.createElement('button');
     btn.className = 'skill-filter-btn' + (_petFilterElem === key ? ' active' : '');
     btn.textContent = label;
-    btn.onclick = () => { _petFilterElem = key; renderPets(); };
+    btn.onclick = () => { _petFilterElem = key; scheduleRenderPets(); };
     filterBar.appendChild(btn);
   });
 
@@ -234,7 +241,7 @@ export function renderPets() {
     const btn = document.createElement('button');
     btn.className = 'skill-filter-btn' + (_petFilterApt === key ? ' active' : '');
     btn.textContent = label;
-    btn.onclick = () => { _petFilterApt = key; renderPets(); };
+    btn.onclick = () => { _petFilterApt = key; scheduleRenderPets(); };
     filterBar.appendChild(btn);
   });
 
@@ -249,7 +256,7 @@ export function renderPets() {
     const btn = document.createElement('button');
     btn.className = 'skill-filter-btn' + (_petFilterForm === key ? ' active' : '');
     btn.textContent = label;
-    btn.onclick = () => { _petFilterForm = key; renderPets(); };
+    btn.onclick = () => { _petFilterForm = key; scheduleRenderPets(); };
     filterBar.appendChild(btn);
   });
 
@@ -280,7 +287,7 @@ export function renderPets() {
     const clearBtn = document.createElement('button');
     clearBtn.className = 'btn-sm';
     clearBtn.textContent = '清空选择';
-    clearBtn.onclick = () => { _petBatchSelected.clear(); renderPets(); };
+    clearBtn.onclick = () => { _petBatchSelected.clear(); scheduleRenderPets(); };
     quickBar.appendChild(clearBtn);
     el.appendChild(quickBar);
   }
@@ -296,7 +303,10 @@ export function renderPets() {
   });
 
   if (pets.length === 0) {
-    el.innerHTML += '<p style="color:#555;text-align:center;padding:12px;">没有匹配的宠物 (共' + gameState.pets.length + '只)</p>';
+    const emptyMsg = document.createElement('p');
+    emptyMsg.style.cssText = 'color:#555;text-align:center;padding:12px;';
+    emptyMsg.textContent = '没有匹配的宠物 (共' + gameState.pets.length + '只)';
+    el.appendChild(emptyMsg);
     return;
   }
 
@@ -356,7 +366,7 @@ export function renderPets() {
         if (inForm) { showToast('出战中的宠物不能放生', 'info'); return; }
         if (_petBatchSelected.has(pet.id)) _petBatchSelected.delete(pet.id);
         else _petBatchSelected.add(pet.id);
-        renderPets();
+        scheduleRenderPets();
       };
     } else {
       card.onclick = () => showPetDetail(pet);
