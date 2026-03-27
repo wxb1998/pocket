@@ -88,3 +88,12 @@ export function tryComprehendOnLevelUp(pet) {
 export function tryComprehend(pet) {
   // 不再触发，保留空函数避免其他文件import报错
 }
+
+/**
+ * 旧版兼容：手动强化技能（新系统中领悟重复技能自动强化，此函数保留兼容）
+ */
+export function enhanceSkill(pet, skillIdx) {
+  // 新系统中技能强化在 tryComprehendOnLevelUp 中自动处理
+  // 保留空函数避免 pets-ui.js import 报错
+  return false;
+}

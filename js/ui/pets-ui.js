@@ -1,5 +1,5 @@
 // 宠物列表 + 宠物详情 + 排序 + 批量出售
-import { SPECIES, SKILLS, ELEM_CHART, PERSONALITIES, QUALITY_NAMES, TALENTS } from '../constants/index.js';
+import { SPECIES, SKILLS, ELEM_CHART, PERSONALITIES, QUALITY_NAMES, TALENTS, GRADE_COLORS, GRADE_NAMES } from '../constants/index.js';
 import { gameState } from '../state.js';
 import { showModal, closeModal, showToast } from '../utils.js';
 import { expForLevel, calcAllStats, getAptFromIV } from '../systems/pet.js';
@@ -143,7 +143,9 @@ export function renderPets() {
     pet.skills.forEach(s => {
       const sd = SKILLS[s.skillId];
       const enh = s.enhanceLevel > 0 ? ' +' + s.enhanceLevel : '';
-      skillsHTML += '<span class="skill-tag">' + sd.name + enh + ' [' + sd.tier + ']</span>';
+      const gradeColor = GRADE_COLORS[sd.grade] || '#ccc';
+      const gradeName = GRADE_NAMES[sd.grade] || '';
+      skillsHTML += '<span class="skill-tag" style="border-color:' + gradeColor + ';">' + sd.name + enh + ' <span style="color:' + gradeColor + ';">[' + gradeName + ']</span></span>';
     });
     if (pet.skills.length === 0) skillsHTML = '<span style="font-size:10px;color:#555;">未习得技能</span>';
 
@@ -218,20 +220,33 @@ function showPetDetail(pet) {
   html += '</div>';
 
   // 技能区
-  html += '<h4 style="color:#e94560;">技能 (' + pet.skills.length + '/4)</h4>';
+  // 技能书（所有已领悟技能）
+  html += '<h4 style="color:#e94560;">装备技能 (' + pet.skills.length + '/4)</h4>';
   pet.skills.forEach((s, idx) => {
     const sd = SKILLS[s.skillId];
+    if (!sd) return;
+    const gc = GRADE_COLORS[sd.grade] || '#ccc';
+    const gn = GRADE_NAMES[sd.grade] || '';
     html += '<div style="padding:6px;margin:4px 0;background:rgba(255,255,255,0.05);border-radius:4px;">';
-    html += '<strong>' + sd.name + '</strong> [' + sd.tier + '] Lv.' + (s.enhanceLevel + 1);
+    html += '<strong style="color:' + gc + ';">' + sd.name + '</strong> <span style="color:' + gc + ';">[' + gn + ']</span> Lv.' + (s.enhanceLevel + 1);
     html += ' | 威力:' + (sd.power || '-') + ' | CD:' + sd.cooldown + ' | ' + sd.desc;
-    if (s.enhanceLevel < 3) {
-      const compMax = Math.floor(pet.level / 3);
-      if (pet.comprehensionCount < compMax) {
-        html += ' <button class="btn-sm btn-enhance" onclick="window._enhanceSkill(' + pet.id + ',' + idx + ')">强化</button>';
-      }
-    }
     html += '</div>';
   });
+  // 技能书总览
+  if (pet.skillBook && pet.skillBook.length > 0) {
+    html += '<h4 style="color:#42a5f5;margin-top:8px;">技能书 (' + pet.skillBook.length + '个已领悟)</h4>';
+    pet.skillBook.forEach((entry, idx) => {
+      const sd = SKILLS[entry.skillId];
+      if (!sd) return;
+      const gc = GRADE_COLORS[sd.grade] || '#ccc';
+      const gn = GRADE_NAMES[sd.grade] || '';
+      const equipped = pet.equippedSkills.indexOf(idx) >= 0;
+      html += '<div style="padding:4px 6px;margin:2px 0;background:rgba(255,255,255,' + (equipped ? '0.08' : '0.02') + ');border-radius:4px;border-left:3px solid ' + gc + ';">';
+      html += '<span style="color:' + gc + ';">' + sd.name + ' [' + gn + ']</span> Lv.' + entry.level;
+      html += equipped ? ' <span style="color:#4caf50;">✓ 已装备</span>' : ' <span style="color:#666;">未装备</span>';
+      html += '</div>';
+    });
+  }
 
   // 天赋果重随
   if (gameState.appraisalUnlocked && gameState.materials.talent_fruit > 0) {
