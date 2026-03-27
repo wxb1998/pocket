@@ -12,8 +12,12 @@ import { bindTooltip, runeTooltipHTML } from './tooltip.js';
 let _selectedPetId = null;
 let _sortKey = 'quality';
 let _sortAsc = false;
-let _batchMode = false;
+let _batchMode = false;     // 'sell' | 'enhance' | false
 let _batchSelected = new Set();
+let _runeFilterQuality = 'all';  // all | white | green | blue | purple | gold
+let _runeFilterSet = 'all';      // all | setId
+let _runeFilterSlot = 'all';     // all | 0-5
+let _runeFilterEquip = 'all';    // all | equipped | unequipped
 
 export function renderRunes() {
   const el = document.getElementById('rune-list');
@@ -57,15 +61,106 @@ export function renderRunes() {
     sortBar.appendChild(btn);
   });
 
-  // 批量操作按钮
-  const batchBtn = document.createElement('button');
-  batchBtn.className = 'sort-btn' + (_batchMode ? ' active' : '');
-  batchBtn.textContent = _batchMode ? '取消批量' : '批量出售';
-  batchBtn.onclick = () => { _batchMode = !_batchMode; _batchSelected.clear(); renderRunes(); };
-  sortBar.appendChild(batchBtn);
+  // 批量出售按钮
+  const batchSellBtn = document.createElement('button');
+  batchSellBtn.className = 'sort-btn' + (_batchMode === 'sell' ? ' active' : '');
+  batchSellBtn.textContent = _batchMode === 'sell' ? '取消批量' : '批量出售';
+  batchSellBtn.onclick = () => { _batchMode = _batchMode === 'sell' ? false : 'sell'; _batchSelected.clear(); renderRunes(); };
+  sortBar.appendChild(batchSellBtn);
+
+  // 批量强化按钮
+  const batchEnhBtn = document.createElement('button');
+  batchEnhBtn.className = 'sort-btn' + (_batchMode === 'enhance' ? ' active' : '');
+  batchEnhBtn.textContent = _batchMode === 'enhance' ? '取消批量' : '批量强化';
+  batchEnhBtn.onclick = () => { _batchMode = _batchMode === 'enhance' ? false : 'enhance'; _batchSelected.clear(); renderRunes(); };
+  sortBar.appendChild(batchEnhBtn);
 
   toolbar.appendChild(petSelect);
   toolbar.appendChild(sortBar);
+
+  // === 筛选栏（仅在全部符文视图下显示） ===
+  if (!_selectedPetId) {
+    const filterBar = document.createElement('div');
+    filterBar.className = 'skill-filter-bar';
+
+    // 品质筛选
+    const quals = [['all','全部'],['white','白'],['green','绿'],['blue','蓝'],['purple','紫'],['gold','金']];
+    quals.forEach(([key, label]) => {
+      const btn = document.createElement('button');
+      const qualData = key !== 'all' ? RUNE_QUALITY[key] : null;
+      btn.className = 'skill-filter-btn' + (_runeFilterQuality === key ? ' active' : '');
+      btn.textContent = label;
+      if (qualData) btn.style.borderColor = qualData.color;
+      btn.onclick = () => { _runeFilterQuality = key; renderRunes(); };
+      filterBar.appendChild(btn);
+    });
+
+    // 分隔
+    const sep1 = document.createElement('span');
+    sep1.textContent = '|';
+    sep1.style.cssText = 'color:#444;margin:0 2px;';
+    filterBar.appendChild(sep1);
+
+    // 装备状态
+    [['all','全部'],['equipped','已装备'],['unequipped','未装备']].forEach(([key, label]) => {
+      const btn = document.createElement('button');
+      btn.className = 'skill-filter-btn' + (_runeFilterEquip === key ? ' active' : '');
+      btn.textContent = label;
+      btn.onclick = () => { _runeFilterEquip = key; renderRunes(); };
+      filterBar.appendChild(btn);
+    });
+
+    // 分隔
+    const sep2 = document.createElement('span');
+    sep2.textContent = '|';
+    sep2.style.cssText = 'color:#444;margin:0 2px;';
+    filterBar.appendChild(sep2);
+
+    // 槽位筛选
+    const slots = [['all','全部槽位']];
+    for (let i = 0; i < 6; i++) slots.push([String(i), RUNE_SLOTS[i].name]);
+    slots.forEach(([key, label]) => {
+      const btn = document.createElement('button');
+      btn.className = 'skill-filter-btn' + (_runeFilterSlot === key ? ' active' : '');
+      btn.textContent = label;
+      btn.onclick = () => { _runeFilterSlot = key; renderRunes(); };
+      filterBar.appendChild(btn);
+    });
+
+    toolbar.appendChild(filterBar);
+
+    // 批量模式快选栏
+    if (_batchMode) {
+      const quickBar = document.createElement('div');
+      quickBar.className = 'skill-filter-bar';
+      // 全选当前筛选
+      const selAllBtn = document.createElement('button');
+      selAllBtn.className = 'btn-sm';
+      selAllBtn.style.cssText = 'background:#1976d2;color:#fff;';
+      selAllBtn.textContent = '全选当前筛选';
+      selAllBtn.onclick = () => { window._batchSelectFilteredRunes(); };
+      quickBar.appendChild(selAllBtn);
+      // 快选低品质
+      if (_batchMode === 'sell') {
+        [['white','全选白'],['green','全选绿']].forEach(([q, label]) => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-sm';
+          btn.style.cssText = 'background:#ff9800;color:#fff;';
+          btn.textContent = label;
+          btn.onclick = () => { window._batchSelectByQuality(q); };
+          quickBar.appendChild(btn);
+        });
+      }
+      // 清空
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'btn-sm';
+      clearBtn.textContent = '清空选择';
+      clearBtn.onclick = () => { _batchSelected.clear(); renderRunes(); };
+      quickBar.appendChild(clearBtn);
+      toolbar.appendChild(quickBar);
+    }
+  }
+
   el.appendChild(toolbar);
 
   // 如果选了宠物，显示装配面板
@@ -229,12 +324,24 @@ function enhanceRuneInPlace(runeId) {
   renderHeader();
 }
 
+function getFilteredRunes() {
+  return (gameState.runes || []).filter(rune => {
+    if (_runeFilterQuality !== 'all' && rune.quality !== _runeFilterQuality) return false;
+    if (_runeFilterSlot !== 'all' && rune.slotType !== parseInt(_runeFilterSlot)) return false;
+    if (_runeFilterEquip === 'equipped' && !rune.equippedTo) return false;
+    if (_runeFilterEquip === 'unequipped' && rune.equippedTo) return false;
+    return true;
+  });
+}
+
 function renderRuneBag(container) {
-  const runes = [...(gameState.runes || [])];
-  if (runes.length === 0) {
+  const allRunes = gameState.runes || [];
+  if (allRunes.length === 0) {
     container.innerHTML += '<p style="color:#666;text-align:center;padding:20px;">暂无符文，去副本挑战获取吧!</p>';
     return;
   }
+
+  const runes = getFilteredRunes();
 
   // 排序
   const qualOrder = { gold: 0, purple: 1, blue: 2, green: 3, white: 4 };
@@ -245,6 +352,11 @@ function renderRuneBag(container) {
     else { va = a.slotType; vb = b.slotType; }
     return _sortAsc ? va - vb : vb - va;
   });
+
+  if (runes.length === 0) {
+    container.innerHTML += '<p style="color:#555;text-align:center;padding:12px;">没有匹配的符文 (共' + allRunes.length + '个)</p>';
+    return;
+  }
 
   const list = document.createElement('div');
   list.className = 'rune-bag-list';
@@ -262,7 +374,8 @@ function renderRuneBag(container) {
     // 批量模式点击选择
     if (_batchMode) {
       div.onclick = () => {
-        if (rune.equippedTo) { showToast('已装备的符文不能批量出售', 'info'); return; }
+        if (_batchMode === 'sell' && rune.equippedTo) { showToast('已装备的符文不能出售', 'info'); return; }
+        if (_batchMode === 'enhance' && rune.level >= RUNE_MAX_LEVEL) { showToast('该符文已满级', 'info'); return; }
         if (_batchSelected.has(rune.id)) _batchSelected.delete(rune.id);
         else _batchSelected.add(rune.id);
         renderRunes();
@@ -314,22 +427,60 @@ function renderRuneBag(container) {
 
   container.appendChild(list);
 
-  // 批量操作底栏
+  // === 批量操作底栏 ===
   if (_batchMode && _batchSelected.size > 0) {
     const batchBar = document.createElement('div');
     batchBar.className = 'batch-bar';
-    const qualMult = { white: 1, green: 2, blue: 4, purple: 8, gold: 15 };
-    let totalPrice = 0;
-    _batchSelected.forEach(id => {
-      const r = gameState.runes.find(rr => rr.id === id);
-      if (r) totalPrice += (100 + r.level * 50) * (qualMult[r.quality] || 1);
-    });
-    batchBar.innerHTML = '<span>已选 ' + _batchSelected.size + ' 个</span>'
-      + '<button class="btn-sm" style="background:#e53935;color:#fff;" onclick="window._batchSellRunes()">批量出售 (获得' + totalPrice + '金币)</button>';
+
+    if (_batchMode === 'sell') {
+      const qualMult = { white: 1, green: 2, blue: 4, purple: 8, gold: 15 };
+      let totalPrice = 0;
+      _batchSelected.forEach(id => {
+        const r = gameState.runes.find(rr => rr.id === id);
+        if (r) totalPrice += (100 + r.level * 50) * (qualMult[r.quality] || 1);
+      });
+      batchBar.innerHTML = '<span>已选 ' + _batchSelected.size + ' 个</span>'
+        + '<button class="btn-sm" style="background:#e53935;color:#fff;" onclick="window._batchSellRunes()">批量出售 (获得' + totalPrice + '金币)</button>';
+    } else if (_batchMode === 'enhance') {
+      // 计算总费用
+      let totalCost = 0;
+      _batchSelected.forEach(id => {
+        const r = gameState.runes.find(rr => rr.id === id);
+        if (r && r.level < RUNE_MAX_LEVEL) totalCost += 500 + r.level * 300;
+      });
+      batchBar.innerHTML = '<span>已选 ' + _batchSelected.size + ' 个</span>'
+        + '<button class="btn-sm" style="background:#ff9800;color:#fff;" onclick="window._batchEnhanceRunes(1)">各+1 (需' + totalCost + '金币)</button>'
+        + '<button class="btn-sm" style="background:#e94560;color:#fff;margin-left:4px;" onclick="window._batchEnhanceRunes(3)">各+3</button>';
+    }
     container.appendChild(batchBar);
   }
 }
 
+// === 批量快选 ===
+window._batchSelectFilteredRunes = function() {
+  const filtered = getFilteredRunes();
+  const selectable = filtered.filter(r => {
+    if (_batchMode === 'sell') return !r.equippedTo;
+    if (_batchMode === 'enhance') return r.level < RUNE_MAX_LEVEL;
+    return true;
+  });
+  const allSelected = selectable.every(r => _batchSelected.has(r.id));
+  if (allSelected) {
+    selectable.forEach(r => _batchSelected.delete(r.id));
+  } else {
+    selectable.forEach(r => _batchSelected.add(r.id));
+  }
+  renderRunes();
+};
+
+window._batchSelectByQuality = function(quality) {
+  gameState.runes.forEach(r => {
+    if (r.quality === quality && !r.equippedTo) _batchSelected.add(r.id);
+  });
+  renderRunes();
+};
+
+// === 批量出售 ===
 window._batchSellRunes = function() {
   let totalGold = 0;
   const ids = [..._batchSelected];
@@ -337,6 +488,44 @@ window._batchSellRunes = function() {
   _batchSelected.clear();
   _batchMode = false;
   showToast('批量出售完成! 获得 ' + totalGold + ' 金币', 'loot');
+  renderRunes();
+  renderHeader();
+};
+
+// === 批量强化 ===
+window._batchEnhanceRunes = function(times) {
+  let totalSpent = 0;
+  let successCount = 0;
+  const ids = [..._batchSelected];
+  for (const id of ids) {
+    const rune = gameState.runes.find(r => r.id === id);
+    if (!rune || rune.level >= RUNE_MAX_LEVEL) continue;
+    for (let t = 0; t < times; t++) {
+      if (rune.level >= RUNE_MAX_LEVEL) break;
+      const cost = 500 + rune.level * 300;
+      if (gameState.gold < cost) {
+        showToast('金币不足，已强化 ' + successCount + ' 次', 'info');
+        _batchSelected.clear();
+        _batchMode = false;
+        renderRunes();
+        renderHeader();
+        return;
+      }
+      const result = enhanceRune(id);
+      if (result.success) {
+        totalSpent += cost;
+        successCount++;
+        // 重新计算装备宠物属性
+        if (rune.equippedTo) {
+          const pet = gameState.pets.find(p => p.id === rune.equippedTo);
+          if (pet) calcAllStats(pet);
+        }
+      }
+    }
+  }
+  _batchSelected.clear();
+  _batchMode = false;
+  showToast('批量强化完成! ' + successCount + '次，花费 ' + totalSpent + ' 金币', 'loot');
   renderRunes();
   renderHeader();
 };

@@ -11,6 +11,9 @@ let _petSortKey = 'level';
 let _petSortAsc = false;
 let _petBatchMode = false;
 let _petBatchSelected = new Set();
+let _petFilterElem = 'all';   // all | fire | water | ...
+let _petFilterApt = 'all';    // all | Sp | S | A | B
+let _petFilterForm = 'all';   // all | inForm | notInForm
 let _skillBookFilter = 'all'; // all | common | fine | rare | legend | equipped | unequipped
 
 // 暴露到 window 供 onclick 调用
@@ -92,6 +95,40 @@ window._useTalentFruit = function(petId, stat) {
   showPetDetail(pet);
 };
 
+// 宠物筛选
+window._setPetFilter = function(type, value) {
+  if (type === 'elem') _petFilterElem = value;
+  else if (type === 'apt') _petFilterApt = value;
+  else if (type === 'form') _petFilterForm = value;
+  renderPets();
+};
+
+// 批量快选：按当前筛选条件全选/全不选
+window._batchSelectFiltered = function() {
+  const filtered = getFilteredPets();
+  const allSelected = filtered.every(p => _petBatchSelected.has(p.id) || gameState.formation.indexOf(p) >= 0);
+  if (allSelected) {
+    filtered.forEach(p => _petBatchSelected.delete(p.id));
+  } else {
+    filtered.forEach(p => {
+      if (gameState.formation.indexOf(p) < 0) _petBatchSelected.add(p.id);
+    });
+  }
+  renderPets();
+};
+
+// 按资质快速全选低级宠物
+window._batchSelectLowApt = function(maxGrade) {
+  const aptVal = { D: 0, C: 1, B: 2, A: 3, S: 4, 'S+': 5 };
+  const threshold = aptVal[maxGrade] || 1;
+  gameState.pets.forEach(p => {
+    if (gameState.formation.indexOf(p) >= 0) return;
+    const score = getAptScore(p);
+    if (score <= threshold * 4) _petBatchSelected.add(p.id);
+  });
+  renderPets();
+};
+
 window._batchSellPets = function() {
   let totalGold = 0;
   const ids = [..._petBatchSelected];
@@ -119,6 +156,21 @@ function getAptScore(pet) {
   return (aptVal[pet.apts.hp] || 0) + (aptVal[pet.apts.atk] || 0) + (aptVal[pet.apts.def] || 0) + (aptVal[pet.apts.spd] || 0);
 }
 
+function getFilteredPets() {
+  return gameState.pets.filter(pet => {
+    if (_petFilterElem !== 'all' && pet.elem !== _petFilterElem) return false;
+    if (_petFilterApt !== 'all') {
+      const aptVal = { D: 0, C: 1, B: 2, A: 3, S: 4, 'S+': 5 };
+      const minVal = aptVal[_petFilterApt] || 0;
+      const hasGoodApt = [pet.apts.hp, pet.apts.atk, pet.apts.def, pet.apts.spd].some(a => (aptVal[a] || 0) >= minVal);
+      if (!hasGoodApt) return false;
+    }
+    if (_petFilterForm === 'inForm' && gameState.formation.indexOf(pet) < 0) return false;
+    if (_petFilterForm === 'notInForm' && gameState.formation.indexOf(pet) >= 0) return false;
+    return true;
+  });
+}
+
 export function renderPets() {
   const el = document.getElementById('pet-list');
   if (!el) return;
@@ -129,10 +181,10 @@ export function renderPets() {
     return;
   }
 
-  // 排序+批量工具栏
-  const toolbar = document.createElement('div');
-  toolbar.className = 'rune-sort-bar';
-  toolbar.style.marginBottom = '10px';
+  // === 排序栏 ===
+  const sortBar = document.createElement('div');
+  sortBar.className = 'rune-sort-bar';
+  sortBar.style.marginBottom = '4px';
 
   [['level','等级'],['apt','资质'],['elem','元素']].forEach(([key, label]) => {
     const btn = document.createElement('button');
@@ -143,19 +195,98 @@ export function renderPets() {
       else { _petSortKey = key; _petSortAsc = false; }
       renderPets();
     };
-    toolbar.appendChild(btn);
+    sortBar.appendChild(btn);
   });
 
   const batchBtn = document.createElement('button');
   batchBtn.className = 'sort-btn' + (_petBatchMode ? ' active' : '');
   batchBtn.textContent = _petBatchMode ? '取消批量' : '批量放生';
   batchBtn.onclick = () => { _petBatchMode = !_petBatchMode; _petBatchSelected.clear(); renderPets(); };
-  toolbar.appendChild(batchBtn);
+  sortBar.appendChild(batchBtn);
+  el.appendChild(sortBar);
 
-  el.appendChild(toolbar);
+  // === 筛选栏 ===
+  const filterBar = document.createElement('div');
+  filterBar.className = 'skill-filter-bar';
+  filterBar.style.marginBottom = '8px';
 
-  // 排序
-  const pets = [...gameState.pets];
+  // 元素筛选
+  const elems = [['all','全部']];
+  const seenElems = new Set();
+  gameState.pets.forEach(p => seenElems.add(p.elem));
+  seenElems.forEach(e => { const ec = ELEM_CHART[e]; if (ec) elems.push([e, ec.name]); });
+  elems.forEach(([key, label]) => {
+    const btn = document.createElement('button');
+    btn.className = 'skill-filter-btn' + (_petFilterElem === key ? ' active' : '');
+    btn.textContent = label;
+    btn.onclick = () => { _petFilterElem = key; renderPets(); };
+    filterBar.appendChild(btn);
+  });
+
+  // 分隔
+  const sep1 = document.createElement('span');
+  sep1.textContent = '|';
+  sep1.style.cssText = 'color:#444;margin:0 2px;';
+  filterBar.appendChild(sep1);
+
+  // 资质筛选
+  [['all','全部'],['S+','S+↑'],['S','S↑'],['A','A↑']].forEach(([key, label]) => {
+    const btn = document.createElement('button');
+    btn.className = 'skill-filter-btn' + (_petFilterApt === key ? ' active' : '');
+    btn.textContent = label;
+    btn.onclick = () => { _petFilterApt = key; renderPets(); };
+    filterBar.appendChild(btn);
+  });
+
+  // 分隔
+  const sep2 = document.createElement('span');
+  sep2.textContent = '|';
+  sep2.style.cssText = 'color:#444;margin:0 2px;';
+  filterBar.appendChild(sep2);
+
+  // 出战筛选
+  [['all','全部'],['inForm','出战'],['notInForm','未出战']].forEach(([key, label]) => {
+    const btn = document.createElement('button');
+    btn.className = 'skill-filter-btn' + (_petFilterForm === key ? ' active' : '');
+    btn.textContent = label;
+    btn.onclick = () => { _petFilterForm = key; renderPets(); };
+    filterBar.appendChild(btn);
+  });
+
+  el.appendChild(filterBar);
+
+  // === 批量模式快选栏 ===
+  if (_petBatchMode) {
+    const quickBar = document.createElement('div');
+    quickBar.className = 'skill-filter-bar';
+    quickBar.style.marginBottom = '6px';
+    // 全选当前筛选
+    const selAllBtn = document.createElement('button');
+    selAllBtn.className = 'btn-sm';
+    selAllBtn.style.cssText = 'background:#1976d2;color:#fff;';
+    selAllBtn.textContent = '全选当前筛选';
+    selAllBtn.onclick = () => window._batchSelectFiltered();
+    quickBar.appendChild(selAllBtn);
+    // 快选低资质
+    [['D','D级以下'],['C','C级以下']].forEach(([grade, label]) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-sm';
+      btn.style.cssText = 'background:#ff9800;color:#fff;';
+      btn.textContent = '快选' + label;
+      btn.onclick = () => window._batchSelectLowApt(grade);
+      quickBar.appendChild(btn);
+    });
+    // 清空选择
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'btn-sm';
+    clearBtn.textContent = '清空选择';
+    clearBtn.onclick = () => { _petBatchSelected.clear(); renderPets(); };
+    quickBar.appendChild(clearBtn);
+    el.appendChild(quickBar);
+  }
+
+  // === 筛选 + 排序 ===
+  const pets = getFilteredPets();
   pets.sort((a, b) => {
     let va, vb;
     if (_petSortKey === 'level') { va = a.level; vb = b.level; }
@@ -163,6 +294,11 @@ export function renderPets() {
     else { va = a.elem; vb = b.elem; if (va < vb) return _petSortAsc ? -1 : 1; if (va > vb) return _petSortAsc ? 1 : -1; return 0; }
     return _petSortAsc ? va - vb : vb - va;
   });
+
+  if (pets.length === 0) {
+    el.innerHTML += '<p style="color:#555;text-align:center;padding:12px;">没有匹配的宠物 (共' + gameState.pets.length + '只)</p>';
+    return;
+  }
 
   pets.forEach(pet => {
     const sp = SPECIES[pet.speciesId];
