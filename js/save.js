@@ -32,7 +32,9 @@ export function saveGame() {
       appraisalUnlocked: gameState.appraisalUnlocked,
       garden: gameState.garden || [],
       petIdCounter: counters.petId,
-      treasureIdCounter: counters.treasureId
+      treasureIdCounter: counters.treasureId,
+      battleSpeed: gameState.battleSpeed || 1,
+      reserveThreshold: gameState.reserveThreshold || 2
     };
 
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -61,6 +63,8 @@ export function loadGame() {
     gameState.currentZone = data.currentZone || 0;
     gameState.reserve = data.reserve || [];
     gameState.garden = data.garden || [];
+    gameState.battleSpeed = data.battleSpeed || 1;
+    gameState.reserveThreshold = data.reserveThreshold || 2;
     counters.petId = data.petIdCounter || 1;
     counters.treasureId = data.treasureIdCounter || 1;
 

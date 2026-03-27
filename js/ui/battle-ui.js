@@ -76,10 +76,12 @@ export function renderBattle() {
       const hpPct = Math.max(0, e.currentHp / e.maxHp * 100);
       div.className = 'battle-unit ' + e.row;
       let captureHTML = '';
-      if (e.capturable && e.currentHp > 0) {
+      if (e.currentHp > 0) {
         captureHTML = '<button class="capture-btn" onclick="window._showCapturePicker(' + i + ')">✨捕捉</button>';
       }
-      div.innerHTML = '<div class="unit-name"><span class="pet-elem elem-' + e.elem + '">' + ELEM_CHART[e.elem].name + '</span> ' + e.displayName + '</div>'
+      // Show star rating before name
+      const starDisplay = e.stars > 0 ? '<span class="star-rating star-' + e.stars + '">' + '★'.repeat(e.stars) + '</span> ' : '';
+      div.innerHTML = '<div class="unit-name">' + starDisplay + '<span class="pet-elem elem-' + e.elem + '">' + ELEM_CHART[e.elem].name + '</span> ' + e.displayName + '</div>'
         + '<div class="unit-hp-bar"><div class="unit-hp-fill' + (hpPct < 30 ? ' low' : '') + '" style="width:' + hpPct + '%"></div></div>'
         + '<div class="unit-info">HP:' + Math.max(0, e.currentHp) + '/' + e.maxHp + ' ATK:' + e.atk + ' SPD:' + e.spd + '</div>'
         + captureHTML;
@@ -101,14 +103,26 @@ export function renderBattle() {
       const hpPct = Math.max(0, pet.currentHp / pet.maxHp * 100);
       const row = i < 3 ? 'front' : 'back';
       div.className = 'battle-unit ' + row;
+      const sp = SPECIES[pet.speciesId];
+      const icon = sp.icon || '';
+
+      let reviveHTML = '';
+      if (pet.currentHp <= 0) {
+        const timer = gameState.reviveTimers ? gameState.reviveTimers[pet.id] : null;
+        if (timer) {
+          const remaining = Math.max(0, Math.ceil((timer - Date.now()) / 1000));
+          reviveHTML = '<div class="revive-timer">复活中... ' + remaining + 's</div>';
+        }
+      }
+
       const skillText = pet.skills.map(s => {
         const sd = SKILLS[s.skillId];
         return (s.cooldownLeft > 0 ? '⏳' : '✦') + sd.name + (s.enhanceLevel > 0 ? '+' + s.enhanceLevel : '');
       }).join(' | ');
-      div.innerHTML = '<div class="unit-name">' + SPECIES[pet.speciesId].evoChain[pet.evoStage] + ' Lv.' + pet.level + '</div>'
+      div.innerHTML = '<div class="unit-name">' + icon + ' ' + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level + '</div>'
         + '<div class="unit-hp-bar"><div class="unit-hp-fill' + (hpPct < 30 ? ' low' : '') + '" style="width:' + hpPct + '%"></div></div>'
         + '<div class="unit-info">HP:' + pet.currentHp + '/' + pet.maxHp + ' ATK:' + pet.atk + ' DEF:' + pet.def + ' SPD:' + pet.spd + '</div>'
-        + '<div class="unit-info" style="margin-top:2px;color:#e94560;">' + (skillText || '无技能') + '</div>';
+        + (reviveHTML ? reviveHTML : '<div class="unit-info" style="margin-top:2px;color:#e94560;">' + (skillText || '无技能') + '</div>');
     } else {
       div.className = 'battle-unit empty';
       div.innerHTML = '<div class="slot-label">' + (i < 3 ? '前排' : '后排') + '</div><div class="unit-info">空位</div>';

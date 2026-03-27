@@ -43,14 +43,41 @@ function initGame() {
   renderBattle();
   renderReserve();
 
-  // 启动战斗循环 (1.5秒/回合)
-  gameState.battleInterval = setInterval(battleTick, 1500);
+  // 启动战斗循环，根据battleSpeed调整间隔
+  const initialSpeed = gameState.battleSpeed || 1;
+  const initialInterval = Math.max(75, Math.floor(1500 / initialSpeed));
+  gameState.battleInterval = setInterval(battleTick, initialInterval);
 
   // 灵兽园产出 (30秒)
   setInterval(gardenTick, 30000);
 
   // 自动存档 (30秒)
   setInterval(saveGame, 30000);
+
+  // 战斗速度滑块
+  const speedSlider = document.getElementById('speed-slider');
+  const speedDisplay = document.getElementById('speed-display');
+  if (speedSlider) {
+    speedSlider.value = initialSpeed;
+    speedSlider.addEventListener('input', () => {
+      const speed = parseFloat(speedSlider.value);
+      gameState.battleSpeed = speed;
+      speedDisplay.textContent = '×' + speed;
+      // 重启战斗循环
+      if (gameState.battleInterval) clearInterval(gameState.battleInterval);
+      const interval = Math.max(75, Math.floor(1500 / speed));
+      gameState.battleInterval = setInterval(battleTick, interval);
+    });
+  }
+
+  // 保留栏阈值选择
+  const thresholdSelect = document.getElementById('reserve-threshold');
+  if (thresholdSelect) {
+    thresholdSelect.value = gameState.reserveThreshold || 2;
+    thresholdSelect.addEventListener('change', () => {
+      gameState.reserveThreshold = parseInt(thresholdSelect.value);
+    });
+  }
 
   // Tab 切换
   document.querySelectorAll('.tab-btn').forEach(btn => {

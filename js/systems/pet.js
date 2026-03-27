@@ -35,16 +35,22 @@ export function randomIV() {
  * @param {string} speciesId - 种族ID
  * @param {number} level - 初始等级
  * @param {boolean} forceAllS - 是否强制全S资质（仅开局混沌）
+ * @param {object} customIVs - 自定义IV值（用于保留栏捕捉）
  */
-export function createPet(speciesId, level, forceAllS) {
+export function createPet(speciesId, level, forceAllS, customIVs) {
   const sp = SPECIES[speciesId];
   if (!sp) return null;
   level = level || 1;
 
   // Generate IV first
-  const iv = forceAllS
-    ? { hp: randInt(27,31), atk: randInt(27,31), def: randInt(27,31), spd: randInt(27,31) }
-    : randomIV();
+  let iv;
+  if (customIVs) {
+    iv = customIVs;
+  } else if (forceAllS) {
+    iv = { hp: randInt(27,31), atk: randInt(27,31), def: randInt(27,31), spd: randInt(27,31) };
+  } else {
+    iv = randomIV();
+  }
 
   // Derive apts from IV
   const apts = {

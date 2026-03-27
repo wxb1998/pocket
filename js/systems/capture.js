@@ -33,8 +33,8 @@ export function attemptCapture(enemyIdx, itemId, onRender) {
   addLog('使用 ' + itemName + ' 尝试捕捉 ' + enemy.displayName + '... (成功率:' + Math.floor(rate) + '%)', 'log-capture');
 
   if (Math.random() * 100 < rate) {
-    // Captured pet is Lv.1, keep IVs/talent random
-    const newPet = createPet(enemy.captureSpecies, 1);
+    // Captured pet is Lv.1, use enemy IVs if available (for starred enemies)
+    const newPet = createPet(enemy.captureSpecies, 1, false, enemy.enemyIVs);
     gameState.pets.push(newPet);
     if (gameState.dex[enemy.captureSpecies]) gameState.dex[enemy.captureSpecies].caught = true;
     enemy.currentHp = 0;
@@ -64,7 +64,9 @@ export function resumeBattle() {
   if (!gameState.battleInterval) {
     // Use the stored reference to battleTick
     if (gameState._battleTickFn) {
-      gameState.battleInterval = setInterval(gameState._battleTickFn, 1500);
+      const speed = gameState.battleSpeed || 1;
+      const interval = Math.max(75, Math.floor(1500 / speed));
+      gameState.battleInterval = setInterval(gameState._battleTickFn, interval);
     }
   }
 }

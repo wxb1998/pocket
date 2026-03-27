@@ -82,8 +82,9 @@ export function renderPets() {
     const compMax = Math.floor(pet.level / 3);
     const compText = '领悟: ' + pet.comprehensionCount + '/' + compMax;
 
+    const icon = sp.icon || '';
     card.innerHTML = '<div class="pet-header">'
-      + '<span class="pet-name">' + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level + '</span>'
+      + '<span class="pet-name">' + icon + ' ' + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level + '</span>'
       + '<span class="pet-elem elem-' + pet.elem + '">' + ELEM_CHART[pet.elem].name + '</span>'
       + '</div>'
       + '<div class="pet-apts">' + aptHTML + ' | 性格:' + pers.name + (pers.up ? '(↑' + pers.up + ' ↓' + pers.down + ')' : '') + '</div>'

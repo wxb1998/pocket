@@ -18,7 +18,10 @@ export const gameState = {
   totalBattles: 0,
   appraisalUnlocked: false,  // 冒险Lv.15解锁鉴定
   garden: [],        // 灵兽园中的宠物ID
-  _battleTickFn: null  // 战斗tick函数引用，用于暂停/恢复战斗
+  _battleTickFn: null,  // 战斗tick函数引用，用于暂停/恢复战斗
+  battleSpeed: 1,    // 战斗速度倍数 (1-20)
+  reserveThreshold: 2,  // 自动保存阈值 (1星以上/2星以上/仅3星)
+  reviveTimers: {}   // 复活计时器 {petId: timestamp}
 };
 
 // ID计数器用对象包装，避免原始值导出不可变问题

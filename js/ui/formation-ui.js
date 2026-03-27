@@ -26,9 +26,10 @@ function renderFormSlot(container, idx) {
 
   if (pet) {
     const sp = SPECIES[pet.speciesId];
+    const icon = sp.icon || '';
     div.className = 'form-slot occupied';
     div.innerHTML = '<div class="slot-label">' + (idx < 3 ? '前排' : '后排') + (idx % 3 + 1) + '</div>'
-      + '<div class="slot-pet-name">' + sp.evoChain[pet.evoStage] + '</div>'
+      + '<div class="slot-pet-name">' + icon + ' ' + sp.evoChain[pet.evoStage] + '</div>'
       + '<div class="slot-pet-info">Lv.' + pet.level + ' ' + ELEM_CHART[pet.elem].name + '</div>'
       + '<div class="slot-pet-info">ATK:' + pet.atk + ' DEF:' + pet.def + ' SPD:' + pet.spd + '</div>';
     div.onclick = () => showSlotActions(idx, pet);
@@ -88,8 +89,9 @@ function showReplacePicker(slotIdx) {
   let html = '<p>选择新宠物替换当前位置:</p>';
   available.forEach(pet => {
     const sp = SPECIES[pet.speciesId];
+    const icon = sp.icon || '';
     html += '<div class="modal-select-item" data-pet-id="' + pet.id + '">'
-      + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level
+      + icon + ' ' + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level
       + ' [' + ELEM_CHART[pet.elem].name + '] '
       + 'ATK:' + pet.atk + ' DEF:' + pet.def + ' SPD:' + pet.spd
       + '</div>';
@@ -127,8 +129,9 @@ function showFormationPicker(slotIdx) {
   let html = '<p>选择宠物上阵到' + (slotIdx < 3 ? '前排' : '后排') + ':</p>';
   available.forEach(pet => {
     const sp = SPECIES[pet.speciesId];
+    const icon = sp.icon || '';
     html += '<div class="modal-select-item" data-pet-id="' + pet.id + '">'
-      + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level
+      + icon + ' ' + sp.evoChain[pet.evoStage] + ' Lv.' + pet.level
       + ' [' + ELEM_CHART[pet.elem].name + '] '
       + 'ATK:' + pet.atk + ' DEF:' + pet.def + ' SPD:' + pet.spd
       + '</div>';

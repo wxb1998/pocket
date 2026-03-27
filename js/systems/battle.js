@@ -22,24 +22,49 @@ export function spawnEnemies() {
     const speciesId = pick(zone.species);
     const sp = SPECIES[speciesId];
     const lv = randInt(zone.lvRange[0], zone.lvRange[1]);
-    const isBoss = Math.random() < 0.05;
-    const bossMult = isBoss ? 1.8 : 1.0;
-    const capturable = !isBoss && Math.random() < 0.35;
-    const hp = Math.floor((sp.baseStats.hp + randInt(5,20)) * (1 + (lv-1)*0.06) * 5 * bossMult);
+
+    // Star rating system
+    const starRoll = Math.random();
+    let stars = 0;
+    if (starRoll < 0.06) stars = 3;
+    else if (starRoll < 0.18) stars = 2;
+    else if (starRoll < 0.40) stars = 1;
+
+    const starMult = stars === 3 ? 1.8 : (stars === 2 ? 1.3 : (stars === 1 ? 1.1 : 1.0));
+    const starPrefix = '★'.repeat(stars);
+
+    // Generate enemy IVs for star display/capture reference
+    const enemyIVs = {
+      hp: randInt(0, 31), atk: randInt(0, 31), def: randInt(0, 31), spd: randInt(0, 31)
+    };
+
+    // Ensure star requirements are met
+    if (stars >= 1) {
+      const stats = ['hp', 'atk', 'def', 'spd'];
+      const boostCount = stars === 3 ? 3 : (stars === 2 ? 2 : 1);
+      const shuffled = stats.sort(() => Math.random() - 0.5);
+      for (let j = 0; j < boostCount; j++) {
+        const minIV = stars === 3 ? 27 : (stars === 2 ? 25 : 20);
+        if (enemyIVs[shuffled[j]] < minIV) enemyIVs[shuffled[j]] = randInt(minIV, 31);
+      }
+    }
+
+    const hp = Math.floor((sp.baseStats.hp + randInt(5,20)) * (1 + (lv-1)*0.06) * 5 * starMult);
 
     enemies.push({
       speciesId,
-      name: (isBoss ? '★' : '') + sp.name + ' Lv.' + lv,
-      displayName: (isBoss ? '★' : '') + sp.evoChain[Math.min(2, Math.floor(lv / 15))],
+      name: starPrefix + sp.name + ' Lv.' + lv,
+      displayName: starPrefix + sp.evoChain[Math.min(2, Math.floor(lv / 15))],
       elem: sp.elem,
       level: lv,
-      atk: Math.floor((sp.baseStats.atk + randInt(5,15)) * (1 + (lv-1)*0.06) * bossMult),
-      def: Math.floor((sp.baseStats.def + randInt(5,15)) * (1 + (lv-1)*0.06) * bossMult),
-      spd: Math.floor((sp.baseStats.spd + randInt(5,15)) * (1 + (lv-1)*0.06) * bossMult),
+      atk: Math.floor((sp.baseStats.atk + randInt(5,15)) * (1 + (lv-1)*0.06) * starMult),
+      def: Math.floor((sp.baseStats.def + randInt(5,15)) * (1 + (lv-1)*0.06) * starMult),
+      spd: Math.floor((sp.baseStats.spd + randInt(5,15)) * (1 + (lv-1)*0.06) * starMult),
       maxHp: hp,
       currentHp: hp,
-      isBoss,
-      capturable,
+      stars,
+      capturable: true,
+      enemyIVs,
       captureSpecies: speciesId,
       row: i < Math.ceil(enemyCount / 2) ? 'front' : 'back',
       isEnemy: true,
@@ -87,6 +112,19 @@ export function spawnEnemies() {
     }
 
     enemies[enemies.length - 1].skills = enemySkills;
+
+    // Auto-save to reserve if meets threshold
+    if (enemies[i].stars >= gameState.reserveThreshold && gameState.reserve.length < 10) {
+      gameState.reserve.push({
+        speciesId,
+        stars: enemies[i].stars,
+        level: lv,
+        ivs: enemyIVs,
+        displayName: starPrefix + sp.evoChain[Math.min(2, Math.floor(lv / 15))],
+        timestamp: Date.now()
+      });
+      showToast(starPrefix + ' ' + sp.name + ' 已保存到极品栏!', 'capture');
+    }
   }
   return enemies;
 }
@@ -315,6 +353,23 @@ export function setBattleRenderer(fn) { _renderBattle = fn; }
 export function battleTick() {
   if (gameState.enemies.length === 0) return;
 
+  // Check revival timers
+  const now = Date.now();
+  for (let i = 0; i < 6; i++) {
+    const pet = gameState.formation[i];
+    if (pet && pet.currentHp <= 0) {
+      if (!gameState.reviveTimers[pet.id]) {
+        // Start 15-second timer
+        gameState.reviveTimers[pet.id] = now + 15000;
+      } else if (now >= gameState.reviveTimers[pet.id]) {
+        // Revive at 50% HP
+        pet.currentHp = Math.floor(pet.maxHp * 0.5);
+        delete gameState.reviveTimers[pet.id];
+        addLog(pet.name + ' 复活了! (50% HP)', 'log-heal');
+      }
+    }
+  }
+
   const units = [];
   getFormationPets().forEach(fp => units.push({ unit: fp.pet, isEnemy: false, spd: fp.pet.spd }));
   gameState.enemies.forEach(e => { if (e.currentHp > 0) units.push({ unit: e, isEnemy: true, spd: e.spd }); });
@@ -343,6 +398,12 @@ function handleVictory() {
   gameState.captureMode = false;
   gameState.captureTargetIdx = -1;
 
+  // Victory HP regen for surviving pets
+  getFormationPets().forEach(fp => {
+    const healAmt = Math.floor(fp.pet.maxHp * 0.10);
+    fp.pet.currentHp = Math.min(fp.pet.maxHp, fp.pet.currentHp + healAmt);
+  });
+
   const avgEnemyLv = gameState.enemies.reduce((s, e) => s + e.level, 0) / gameState.enemies.length;
   const baseExp = Math.floor(avgEnemyLv * 8 + 10);
   const goldReward = Math.floor(avgEnemyLv * 3 + randInt(5, 15));
@@ -354,13 +415,17 @@ function handleVictory() {
     tryComprehend(fp.pet);
   });
 
+  // Calculate drop multiplier based on max enemy stars
+  const maxStars = Math.max(...gameState.enemies.map(e => e.stars || 0));
+  const dropMult = maxStars >= 3 ? 3 : (maxStars >= 2 ? 2 : 1);
+
   // 材料掉落
-  if (Math.random() < 0.05) { gameState.materials.soul_stone++; addLog('掉落了灵魂石!', 'log-loot'); showToast('获得灵魂石 x1!', 'loot'); }
-  if (Math.random() < 0.25) { gameState.materials.enhance_stone++; addLog('掉落了强化石!', 'log-loot'); }
-  if (Math.random() < 0.06) { gameState.materials.rare_enhance++; addLog('掉落了精良强化石!', 'log-loot'); }
+  if (Math.random() < 0.05 * dropMult) { gameState.materials.soul_stone++; addLog('掉落了灵魂石!', 'log-loot'); showToast('获得灵魂石 x1!', 'loot'); }
+  if (Math.random() < 0.25 * dropMult) { gameState.materials.enhance_stone++; addLog('掉落了强化石!', 'log-loot'); }
+  if (Math.random() < 0.06 * dropMult) { gameState.materials.rare_enhance++; addLog('掉落了精良强化石!', 'log-loot'); }
 
   // 宝物掉落
-  if (Math.random() < 0.10) {
+  if (Math.random() < 0.10 * dropMult) {
     const qual = weightedPick({ white:40, green:30, blue:18, purple:9, gold:3 });
     const tr = generateTreasure(qual);
     gameState.treasures.push(tr);

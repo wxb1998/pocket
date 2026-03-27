@@ -34,6 +34,11 @@
 
     <div id="panel-battle" class="panel active">
       <div id="zone-selector"></div>
+      <div id="speed-control" style="display:flex;align-items:center;gap:8px;padding:4px 8px;margin-bottom:4px;">
+        <span style="color:#aaa;font-size:12px;">速度:</span>
+        <input type="range" id="speed-slider" min="1" max="20" step="0.5" value="1" style="flex:1;accent-color:#e94560;">
+        <span id="speed-display" style="color:#e94560;font-size:12px;min-width:30px;">×1</span>
+      </div>
       <div id="battle-area">
         <div class="battle-side" id="enemy-side"></div>
         <div class="battle-divider">─── ⚔ VS ⚔ ───</div>
@@ -69,6 +74,14 @@
 
     <div id="reserve-bar">
       <h3>极品保留栏（离线暂存稀有遭遇，上限10）</h3>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="color:#aaa;font-size:12px;">自动保存阈值:</span>
+        <select id="reserve-threshold" style="background:#16213e;color:#ddd;border:1px solid #333;padding:2px 6px;border-radius:4px;">
+          <option value="1">1星以上</option>
+          <option value="2" selected>2星以上</option>
+          <option value="3">仅3星</option>
+        </select>
+      </div>
       <div id="reserve-slots"></div>
     </div>
   </div>
