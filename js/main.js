@@ -5,6 +5,7 @@ import { createPet } from './systems/pet.js';
 import { spawnEnemies, battleTick, setBattleRenderer } from './systems/battle.js';
 import { gardenTick } from './systems/garden.js';
 import { initStamina, regenStamina } from './systems/dungeon.js';
+import { initVigor, regenAllVigor } from './systems/explore.js';
 import { saveGame, loadGame } from './save.js';
 import { renderHeader } from './ui/header-ui.js';
 import { renderBattle, renderZoneSelector } from './ui/battle-ui.js';
@@ -16,6 +17,7 @@ import { renderShop } from './ui/shop-ui.js';
 import { renderGarden } from './ui/garden-ui.js';
 import { renderRunes } from './ui/rune-ui.js';
 import { renderDungeon } from './ui/dungeon-ui.js';
+import { renderMap, startMapRefresh } from './ui/map-ui.js';
 
 function initGame() {
   const loaded = loadGame();
@@ -33,6 +35,9 @@ function initGame() {
 
   // 初始化体力
   initStamina();
+
+  // 初始化活力系统
+  initVigor();
 
   // 生成初始敌人
   gameState.enemies = spawnEnemies();
@@ -59,6 +64,12 @@ function initGame() {
 
   // 体力回复检查 (60秒)
   setInterval(regenStamina, 60000);
+
+  // 活力回复检查 (60秒)
+  setInterval(regenAllVigor, 60000);
+
+  // 地图活力刷新
+  startMapRefresh();
 
   // 自动存档 (30秒)
   setInterval(saveGame, 30000);
@@ -101,6 +112,7 @@ function initGame() {
         case 'pets': renderPets(); break;
         case 'formation': renderFormation(); break;
         case 'rune': renderRunes(); break;
+        case 'explore': renderMap(); break;
         case 'dungeon': renderDungeon(); break;
         case 'treasure': renderTreasure(); break;
         case 'dex': renderDex(); renderReserve(); break;

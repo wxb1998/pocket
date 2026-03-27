@@ -457,4 +457,45 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
   .skill-filter-bar { gap:3px; }
   .skill-filter-btn { padding:6px 10px; font-size:12px; min-height:32px; }
   .log-filter-btn { padding:4px 10px; font-size:11px; min-height:30px; }
+  .map-grid { grid-template-columns:1fr !important; }
+  .map-zone-card { padding:10px; }
+}
+
+/* ===== Map / Explore UI ===== */
+.map-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.map-zone-card {
+  background:rgba(255,255,255,0.04); border-radius:10px; padding:12px; cursor:pointer;
+  border:2px solid transparent; transition:all 0.3s ease;
+  position:relative; overflow:hidden;
+}
+.map-zone-card:hover { background:rgba(255,255,255,0.08); transform:translateY(-2px); }
+.map-zone-card.active { border-color:#e94560; background:rgba(233,69,96,0.08); }
+.map-zone-card.locked { opacity:0.5; cursor:not-allowed; }
+.map-zone-card.locked:hover { transform:none; }
+
+.map-zone-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.map-zone-icon { font-size:24px; line-height:1; }
+.map-zone-title { display:flex; flex-direction:column; flex:1; }
+.map-zone-name { font-size:14px; font-weight:bold; color:#e0e0e0; }
+.map-zone-lv { font-size:11px; color:#888; }
+.map-zone-badge {
+  background:#e94560; color:#fff; font-size:10px; padding:2px 8px;
+  border-radius:10px; font-weight:bold;
+}
+.map-zone-desc { font-size:11px; color:#999; margin-bottom:8px; }
+
+.map-vigor-bar {
+  height:8px; background:#333; border-radius:4px; overflow:hidden; margin-bottom:4px;
+}
+.map-vigor-fill {
+  height:100%; border-radius:4px; transition:width 0.5s ease, background 0.3s ease;
+}
+.map-vigor-info {
+  display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;
+}
+.map-regen-info { font-size:10px; color:#666; margin-top:2px; }
+.map-species { margin-top:4px; }
+.map-elem-tags { margin-top:2px; }
+.map-locked-info {
+  text-align:center; color:#666; font-size:13px; padding:16px 0;
 }

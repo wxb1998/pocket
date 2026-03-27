@@ -1,5 +1,5 @@
 // Service Worker - 离线缓存支持
-const CACHE_NAME = 'shanhaijing-v18';
+const CACHE_NAME = 'shanhaijing-v19';
 
 const ASSETS = [
   './',
@@ -27,6 +27,7 @@ const ASSETS = [
   './js/systems/garden.js',
   './js/systems/rune.js',
   './js/systems/dungeon.js',
+  './js/systems/explore.js',
   './js/ui/header-ui.js',
   './js/ui/battle-ui.js',
   './js/ui/pets-ui.js',
@@ -37,6 +38,7 @@ const ASSETS = [
   './js/ui/garden-ui.js',
   './js/ui/rune-ui.js',
   './js/ui/dungeon-ui.js',
+  './js/ui/map-ui.js',
   './js/ui/sprites.js',
   './js/ui/tooltip.js'
 ];

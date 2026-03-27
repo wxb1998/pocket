@@ -28,7 +28,9 @@ export const gameState = {
   stamina: 120,
   lastStaminaTime: Date.now(),
   // 副本进度
-  dungeonProgress: {} // {floorId: true}
+  dungeonProgress: {}, // {floorId: true}
+  // 活力系统（开罗风）
+  zoneVigor: {} // {zoneIdx: {current:number, lastRegenTime:timestamp}}
 };
 
 // ID计数器用对象包装，避免原始值导出不可变问题

@@ -42,7 +42,9 @@ export function saveGame() {
       stamina: gameState.stamina,
       lastStaminaTime: gameState.lastStaminaTime,
       // 副本进度
-      dungeonProgress: gameState.dungeonProgress || {}
+      dungeonProgress: gameState.dungeonProgress || {},
+      // 活力系统
+      zoneVigor: gameState.zoneVigor || {}
     };
 
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -88,6 +90,9 @@ export function loadGame() {
 
     // 副本进度
     gameState.dungeonProgress = data.dungeonProgress || {};
+
+    // 活力系统
+    gameState.zoneVigor = data.zoneVigor || {};
 
     // 恢复宝物
     gameState.treasures = (data.treasures || []).map(t => ({ ...t, equippedTo: t.equippedTo || null }));

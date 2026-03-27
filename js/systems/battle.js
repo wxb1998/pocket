@@ -6,6 +6,7 @@ import { gainExp } from './pet.js';
 import { tryComprehend } from './comprehend.js';
 import { generateTreasure } from './treasure.js';
 import { QUALITY_NAMES } from '../constants/treasure-data.js';
+import { consumeVigor } from './explore.js';
 
 // ===== 敌人生成 =====
 
@@ -853,27 +854,31 @@ function handleVictory() {
     fp.pet.currentHp = Math.min(fp.pet.maxHp, fp.pet.currentHp + healAmt);
   });
 
+  // 活力系统：消耗活力并获取收益倍率
+  const vigorMult = consumeVigor();
+  const vigorTag = vigorMult < 1.0 ? ' (活力不足 ×' + vigorMult.toFixed(1) + ')' : '';
+
   const avgEnemyLv = gameState.enemies.reduce((s, e) => s + e.level, 0) / gameState.enemies.length;
-  const baseExp = Math.floor(avgEnemyLv * 8 + 10);
-  const goldReward = Math.floor(avgEnemyLv * 3 + randInt(5, 15));
+  const baseExp = Math.floor((avgEnemyLv * 8 + 10) * vigorMult);
+  const goldReward = Math.floor((avgEnemyLv * 3 + randInt(5, 15)) * vigorMult);
   gameState.gold += goldReward;
-  addLog('战斗胜利! 获得 ' + goldReward + ' 金币', 'log-loot');
+  addLog('战斗胜利! 获得 ' + goldReward + ' 金币' + vigorTag, 'log-loot');
 
   getFormationPets().forEach(fp => {
     gainExp(fp.pet, baseExp);
     tryComprehend(fp.pet);
   });
 
-  // Calculate drop multiplier based on max enemy stars
+  // Calculate drop multiplier based on max enemy stars × vigor
   const maxStars = Math.max(...gameState.enemies.map(e => e.stars || 0));
-  const dropMult = maxStars >= 3 ? 3 : (maxStars >= 2 ? 2 : 1);
+  const dropMult = (maxStars >= 3 ? 3 : (maxStars >= 2 ? 2 : 1)) * vigorMult;
 
   // 材料掉落
   if (Math.random() < 0.05 * dropMult) { gameState.materials.soul_stone++; addLog('掉落了灵魂石!', 'log-loot'); showToast('获得灵魂石 x1!', 'loot'); }
   if (Math.random() < 0.25 * dropMult) { gameState.materials.enhance_stone++; addLog('掉落了强化石!', 'log-loot'); }
   if (Math.random() < 0.06 * dropMult) { gameState.materials.rare_enhance++; addLog('掉落了精良强化石!', 'log-loot'); }
 
-  // 宝物掉落
+  // 宝物掉落（受活力影响）
   if (Math.random() < 0.10 * dropMult) {
     const qual = weightedPick({ white:40, green:30, blue:18, purple:9, gold:3 });
     const tr = generateTreasure(qual);
