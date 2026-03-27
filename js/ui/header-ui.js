@@ -1,11 +1,25 @@
-// 顶部资源栏渲染
+// 顶部资源栏渲染 + 金币变化动画
 import { gameState } from '../state.js';
 import { getVigorInfo } from '../systems/explore.js';
 import { ZONES } from '../constants/index.js';
 
+let _lastGold = -1;
+
 export function renderHeader() {
   document.getElementById('res-level').textContent = '冒险Lv.' + gameState.advLv;
-  document.getElementById('res-gold').textContent = '金币:' + gameState.gold;
+
+  // 金币变化闪光
+  const goldEl = document.getElementById('res-gold');
+  if (goldEl) {
+    goldEl.textContent = '金币:' + gameState.gold;
+    if (_lastGold >= 0 && gameState.gold > _lastGold) {
+      goldEl.classList.remove('gold-flash');
+      void goldEl.offsetWidth; // force reflow to restart animation
+      goldEl.classList.add('gold-flash');
+    }
+    _lastGold = gameState.gold;
+  }
+
   document.getElementById('res-soul').textContent = '灵魂石:' + gameState.materials.soul_stone;
   const ropeEl = document.getElementById('res-rope');
   if (ropeEl) ropeEl.textContent = '草绳:' + (gameState.materials.rope || 0);
@@ -15,7 +29,6 @@ export function renderHeader() {
   const vigorEl = document.getElementById('res-vigor');
   if (vigorEl) {
     const info = getVigorInfo(gameState.currentZone);
-    const zone = ZONES[gameState.currentZone];
     const pct = Math.floor(info.ratio * 100);
     const color = pct > 60 ? '#4caf50' : (pct > 30 ? '#ff9800' : '#f44336');
     vigorEl.innerHTML = '<span style="color:' + color + ';">🔥' + info.current + '/' + info.max + '</span>';

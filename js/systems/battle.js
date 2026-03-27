@@ -657,7 +657,7 @@ function executeSkill(unit, skillSlot) {
     // 记录攻击动作（供UI动画）
     const atkId = unit.isEnemy ? 'e' + gameState.enemies.indexOf(unit) : 'a' + gameState.formation.indexOf(unit);
     const tgtId = target.isEnemy ? 'e' + gameState.enemies.indexOf(target) : 'a' + gameState.formation.indexOf(target);
-    if (gameState._battleActions) gameState._battleActions.push({ attackerId: atkId, targetId: tgtId });
+    if (gameState._battleActions) gameState._battleActions.push({ attackerId: atkId, targetId: tgtId, skillName: skillData.name });
 
     // 施加状态效果（如果技能有）
     if (eff) tryApplyStatus(unit, target, eff);

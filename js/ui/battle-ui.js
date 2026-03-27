@@ -95,8 +95,14 @@ function playDamageAnimations(oldSnap) {
         showDamageNumber(el, diff, isBigHit, false);
         el.classList.add('hit-flash');
         setTimeout(() => el.classList.remove('hit-flash'), 250);
+        // Death animation
+        if (newHp <= 0) {
+          el.classList.add('unit-dead');
+        }
       } else if (diff < 0) {
         showDamageNumber(el, Math.abs(diff), false, true);
+        el.classList.add('heal-flash');
+        setTimeout(() => el.classList.remove('heal-flash'), 500);
       }
     }
   });
@@ -114,7 +120,11 @@ function playAttackAnimations() {
         if (atkEl) {
           const isEnemy = act.attackerId.startsWith('e');
           atkEl.classList.add(isEnemy ? 'atk-anim-down' : 'atk-anim-up');
-          setTimeout(() => atkEl.classList.remove('atk-anim-down', 'atk-anim-up'), 300);
+          // Skill cast glow for non-basic attacks
+          if (act.skillName) atkEl.classList.add('skill-cast-glow');
+          setTimeout(() => {
+            atkEl.classList.remove('atk-anim-down', 'atk-anim-up', 'skill-cast-glow');
+          }, 400);
         }
       }, i * 100);
     });

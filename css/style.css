@@ -1,42 +1,66 @@
-/* 山海经·挂机物语 - 样式表 */
+/* 山海经·挂机物语 - 开罗风样式表 */
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a2e; color:#e0e0e0; min-height:100vh; }
-#app { max-width:900px; margin:0 auto; padding:8px; }
+body {
+  font-family: 'Microsoft YaHei','PingFang SC',sans-serif;
+  background:#1c1b29; color:#e8e0d4; min-height:100vh;
+  padding-bottom:64px; /* 给底部导航留空间 */
+}
+#app { max-width:900px; margin:0 auto; padding:8px 8px 0; }
 
-/* ===== Header ===== */
-#header { background:linear-gradient(135deg,#16213e,#0f3460); border-radius:10px; padding:12px 16px; margin-bottom:8px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-#header h1 { font-size:20px; color:#e94560; flex-shrink:0; }
-.res-bar { display:flex; gap:12px; flex-wrap:wrap; font-size:13px; margin-left:auto; }
-.res-item { background:rgba(255,255,255,0.08); padding:3px 10px; border-radius:12px; white-space:nowrap; }
+/* ===== Header (开罗风暖色标题栏) ===== */
+#header {
+  background:linear-gradient(135deg,#2a2040,#1e1838); border-radius:10px; padding:10px 14px; margin-bottom:6px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  border:2px solid #3d3556; box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+#header h1 { font-size:18px; color:#f0c040; flex-shrink:0; text-shadow:1px 1px 0 #8b6914; letter-spacing:1px; }
+.res-bar { display:flex; gap:8px; flex-wrap:wrap; font-size:12px; margin-left:auto; }
+.res-item {
+  background:rgba(240,192,64,0.08); padding:3px 8px; border-radius:10px; white-space:nowrap;
+  border:1px solid rgba(240,192,64,0.15);
+}
 
-/* ===== Tabs ===== */
-#tabs { display:flex; gap:4px; margin-bottom:8px; flex-wrap:wrap; }
-.tab-btn { flex:1; min-width:60px; padding:8px 4px; background:#16213e; border:none; color:#aaa; font-size:14px; border-radius:8px 8px 0 0; cursor:pointer; transition:all .2s; }
-.tab-btn.active { background:#0f3460; color:#e94560; font-weight:bold; }
+/* ===== Bottom Nav Bar (开罗风固定底部导航) ===== */
+#tabs {
+  position:fixed; bottom:0; left:0; right:0; z-index:100;
+  display:flex; gap:0; background:#1e1838; border-top:2px solid #3d3556;
+  box-shadow:0 -2px 10px rgba(0,0,0,0.4); padding:0; margin:0;
+  max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.tab-btn {
+  flex:1; min-width:0; padding:6px 2px 8px; background:transparent; border:none;
+  color:#7a7090; font-size:10px; cursor:pointer; transition:all .15s;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  border-radius:0; white-space:nowrap;
+}
+.tab-btn .tab-icon { font-size:18px; line-height:1; }
+.tab-btn .tab-label { font-size:10px; }
+.tab-btn.active { color:#f0c040; background:rgba(240,192,64,0.08); }
+.tab-btn:active { transform:scale(0.92); }
 
 /* ===== Panels ===== */
-.panel { display:none; background:#16213e; border-radius:0 0 10px 10px; padding:12px; min-height:400px; }
+.panel { display:none; background:#211e30; border-radius:10px; padding:12px; min-height:calc(100vh - 140px); border:1px solid #2e2a42; }
 .panel.active { display:block; }
 
 /* ===== Zone Selector ===== */
 #zone-selector { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
-.zone-btn { padding:5px 12px; border:1px solid #333; background:#1a1a2e; color:#aaa; border-radius:6px; cursor:pointer; font-size:12px; transition:all .2s; }
-.zone-btn.active { border-color:#e94560; color:#e94560; background:rgba(233,69,96,0.1); }
+.zone-btn { padding:5px 12px; border:1px solid #3d3556; background:#2a2040; color:#9a90b0; border-radius:6px; cursor:pointer; font-size:12px; transition:all .2s; }
+.zone-btn.active { border-color:#f0c040; color:#f0c040; background:rgba(240,192,64,0.1); }
 .zone-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
 /* ===== Battle Area ===== */
 #battle-area { display:flex; flex-direction:column; gap:8px; }
 .battle-side { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
 .battle-unit { background:rgba(255,255,255,0.05); border-radius:8px; padding:8px; text-align:center; min-height:80px; position:relative; border:1px solid transparent; }
-.battle-unit.front { border-bottom:2px solid rgba(233,69,96,0.3); }
+.battle-unit.front { border-bottom:2px solid rgba(240,192,64,0.3); }
 .battle-unit.empty { opacity:0.3; }
 .battle-unit .unit-name { font-size:13px; font-weight:bold; margin-bottom:4px; }
 .battle-unit .unit-hp-bar { height:6px; background:#333; border-radius:3px; overflow:hidden; margin:3px 0; }
 .battle-unit .unit-hp-fill { height:100%; background:#4caf50; border-radius:3px; transition:width .3s; }
 .battle-unit .unit-hp-fill.low { background:#f44336; }
 .battle-unit .unit-info { font-size:10px; color:#888; }
-.capture-btn { background:#e94560; color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer; margin-top:4px; }
-.capture-btn:hover { background:#ff6b81; }
+.capture-btn { background:#f0c040; color:#1c1b29; border:none; padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; margin-top:4px; font-weight:bold; transition:all 0.15s; }
+.capture-btn:hover { background:#f5d060; }
 .battle-divider { text-align:center; color:#555; font-size:12px; padding:4px; }
 
 /* ===== Battle Log ===== */
@@ -47,13 +71,13 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 #battle-log .log-enemy-dmg { color:#ef5350; }
 #battle-log .log-heal { color:#4caf50; }
 #battle-log .log-skill { color:#ff9800; }
-#battle-log .log-capture { color:#e94560; }
+#battle-log .log-capture { color:#f0c040; }
 #battle-log .log-loot { color:#ffd700; }
 #battle-log .log-comprehend { color:#9c27b0; }
 
 /* ===== Pet Cards ===== */
-.pet-card { background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-bottom:8px; cursor:pointer; transition:all .2s; border:1px solid transparent; }
-.pet-card:hover { border-color:#e94560; }
+.pet-card { background:rgba(240,192,64,0.04); border-radius:8px; padding:10px; margin-bottom:8px; cursor:pointer; transition:all .2s; border:1px solid #2e2a42; }
+.pet-card:hover { border-color:#f0c040; background:rgba(240,192,64,0.08); }
 .pet-card.in-formation { border-color:#4caf50; }
 .pet-card .pet-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
 .pet-card .pet-name { font-size:14px; font-weight:bold; }
@@ -62,14 +86,14 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 .pet-card .pet-stats span { background:rgba(255,255,255,0.05); padding:2px 4px; border-radius:4px; text-align:center; }
 .pet-card .pet-apts { font-size:11px; color:#aaa; margin:4px 0; }
 .pet-card .pet-skills-row { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
-.pet-card .skill-tag { font-size:10px; padding:2px 6px; background:rgba(233,69,96,0.15); border-radius:4px; color:#e94560; }
+.pet-card .skill-tag { font-size:10px; padding:2px 6px; background:rgba(240,192,64,0.12); border-radius:4px; color:#f0c040; }
 .pet-card .exp-bar { height:4px; background:#333; border-radius:2px; overflow:hidden; margin-top:6px; }
 .pet-card .exp-fill { height:100%; background:#2196f3; border-radius:2px; }
 
 /* ===== Formation Grid ===== */
 #formation-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-width:400px; margin:0 auto; }
-.form-slot { background:rgba(255,255,255,0.05); border-radius:8px; padding:16px 8px; text-align:center; min-height:100px; border:2px dashed #333; cursor:pointer; transition:all .2s; }
-.form-slot:hover { border-color:#e94560; }
+.form-slot { background:rgba(240,192,64,0.04); border-radius:8px; padding:16px 8px; text-align:center; min-height:100px; border:2px dashed #3d3556; cursor:pointer; transition:all .2s; }
+.form-slot:hover { border-color:#f0c040; }
 .form-slot.occupied { border-style:solid; border-color:#4caf50; }
 .form-slot .slot-label { font-size:10px; color:#555; margin-bottom:6px; }
 .form-slot .slot-pet-name { font-size:13px; font-weight:bold; }
@@ -77,7 +101,7 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 .row-label { grid-column:1/-1; text-align:center; font-size:12px; color:#666; padding:4px; }
 
 /* ===== Treasure Cards ===== */
-.treasure-card { background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-bottom:8px; border-left:3px solid #888; }
+.treasure-card { background:rgba(240,192,64,0.03); border-radius:8px; padding:10px; margin-bottom:8px; border-left:3px solid #3d3556; }
 .treasure-card.quality-green { border-left-color:#4caf50; }
 .treasure-card.quality-blue { border-left-color:#2196f3; }
 .treasure-card.quality-purple { border-left-color:#9c27b0; }
@@ -86,27 +110,32 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 .treasure-card .tr-affixes { font-size:11px; color:#aaa; margin:4px 0; }
 .treasure-card .tr-passive { font-size:11px; color:#9c27b0; }
 .treasure-card .tr-actions { display:flex; gap:6px; margin-top:6px; }
-.btn-sm { padding:4px 10px; border:none; border-radius:4px; font-size:11px; cursor:pointer; }
+.btn-sm { padding:4px 10px; border:1px solid rgba(240,192,64,0.2); border-radius:6px; font-size:11px; cursor:pointer; background:#2a2040; color:#d0c8b8; }
 .btn-enhance { background:#ff9800; color:#fff; }
 .btn-equip { background:#4caf50; color:#fff; }
 .btn-unequip { background:#666; color:#fff; }
 
 /* ===== Reserve Bar ===== */
-#reserve-bar { background:linear-gradient(135deg,#16213e,#0f3460); border-radius:10px; padding:10px; margin-top:8px; }
+#reserve-bar { background:linear-gradient(135deg,#2a2040,#1e1838); border-radius:10px; padding:10px; margin-top:8px; border:1px solid #3d3556; }
 #reserve-bar h3 { font-size:13px; color:#aaa; margin-bottom:6px; }
 #reserve-slots { display:flex; gap:6px; flex-wrap:wrap; }
-.reserve-slot { width:70px; height:70px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10px; border:1px dashed #333; cursor:pointer; }
-.reserve-slot.occupied { border-color:#e94560; border-style:solid; }
+.reserve-slot { width:70px; height:70px; background:rgba(240,192,64,0.03); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10px; border:1px dashed #3d3556; cursor:pointer; }
+.reserve-slot.occupied { border-color:#f0c040; border-style:solid; }
 
-/* ===== Modal ===== */
+/* ===== Modal (开罗风对话框) ===== */
 .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
-.modal-box { background:#1a1a2e; border:1px solid #333; border-radius:12px; padding:20px; max-width:500px; width:90%; max-height:80vh; overflow-y:auto; }
-.modal-box h3 { margin-bottom:12px; color:#e94560; }
-.modal-btn { padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-size:13px; margin:4px; }
-.modal-btn-primary { background:#e94560; color:#fff; }
-.modal-btn-secondary { background:#333; color:#ccc; }
-.modal-select-item { padding:8px; margin:4px 0; background:rgba(255,255,255,0.05); border-radius:6px; cursor:pointer; }
-.modal-select-item:hover { background:rgba(233,69,96,0.15); }
+.modal-box {
+  background:#211e30; border:2px solid #f0c040; border-radius:12px; padding:20px;
+  max-width:500px; width:90%; max-height:80vh; overflow-y:auto;
+  box-shadow:0 0 20px rgba(240,192,64,0.15);
+}
+.modal-box h3 { margin-bottom:12px; color:#f0c040; }
+.modal-btn { padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-size:13px; margin:4px; transition:all 0.15s; }
+.modal-btn-primary { background:#f0c040; color:#1a1a2e; font-weight:bold; }
+.modal-btn-secondary { background:#3d3556; color:#d0c8b8; }
+.modal-btn:active { transform:scale(0.93); }
+.modal-select-item { padding:8px; margin:4px 0; background:rgba(240,192,64,0.05); border-radius:6px; cursor:pointer; border:1px solid #2e2a42; }
+.modal-select-item:hover { background:rgba(240,192,64,0.12); border-color:#f0c040; }
 
 /* ===== Dex Grid ===== */
 .dex-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
@@ -116,7 +145,7 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 
 /* ===== Toast ===== */
 #toast-container { position:fixed; top:20px; right:20px; z-index:999; }
-.toast { background:#333; color:#fff; padding:10px 16px; border-radius:8px; margin-bottom:6px; font-size:13px; animation:slideIn .3s; max-width:300px; }
+.toast { background:#2a2040; color:#e8e0d4; padding:10px 16px; border-radius:8px; margin-bottom:6px; font-size:13px; animation:slideIn .3s; max-width:300px; border:1px solid #3d3556; }
 @keyframes slideIn { from{transform:translateX(100%);opacity:0;} to{transform:translateX(0);opacity:1;} }
 
 /* ===== Element Colors ===== */
@@ -218,10 +247,10 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 #speed-slider { height: 4px; }
 
 /* ===== 符文系统 ===== */
-.rune-card { background:rgba(255,255,255,0.04); border-radius:8px; padding:10px 12px; margin-bottom:8px; transition:background 0.2s; }
-.rune-card:hover { background:rgba(255,255,255,0.08); }
+.rune-card { background:rgba(240,192,64,0.04); border-radius:8px; padding:10px 12px; margin-bottom:8px; transition:background 0.2s; border:1px solid #2e2a42; }
+.rune-card:hover { background:rgba(240,192,64,0.08); border-color:#3d3556; }
 .rune-header { font-size:13px; margin-bottom:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.rune-level { background:#e94560; color:#fff; font-size:10px; padding:1px 6px; border-radius:8px; }
+.rune-level { background:#f0c040; color:#1c1b29; font-size:10px; padding:1px 6px; border-radius:8px; font-weight:bold; }
 .rune-main { font-size:15px; font-weight:bold; color:#ffca28; margin:4px 0; }
 .rune-subs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
 .rune-sub { background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; font-size:11px; color:#aaa; }
@@ -229,20 +258,20 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 
 /* ===== 副本系统 ===== */
 .dungeon-stamina { text-align:center; padding:8px; margin-bottom:12px; background:rgba(255,255,255,0.04); border-radius:8px; font-size:14px; }
-.dungeon-floor { background:rgba(255,255,255,0.04); border-radius:8px; padding:12px; margin-bottom:8px; border-left:3px solid #555; transition:background 0.2s; }
-.dungeon-floor:hover { background:rgba(255,255,255,0.08); }
+.dungeon-floor { background:rgba(240,192,64,0.03); border-radius:8px; padding:12px; margin-bottom:8px; border-left:3px solid #3d3556; transition:background 0.2s; }
+.dungeon-floor:hover { background:rgba(240,192,64,0.07); }
 .dungeon-floor.cleared { border-left-color:#4caf50; }
 .dungeon-floor.no-stamina { opacity:0.5; }
 .floor-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
-.floor-name { font-size:14px; font-weight:bold; color:#e94560; }
+.floor-name { font-size:14px; font-weight:bold; color:#f0c040; }
 .floor-level { font-size:12px; color:#888; }
 .floor-cleared { font-size:12px; }
 .floor-desc { font-size:12px; color:#888; margin-bottom:6px; }
 .floor-info { display:flex; gap:16px; font-size:11px; color:#aaa; margin-bottom:8px; }
 .floor-actions { }
-.dungeon-btn { background:#e94560; color:#fff; border:none; padding:4px 12px; border-radius:4px; cursor:pointer; font-size:12px; }
-.dungeon-btn:hover { background:#ff6b6b; }
-.dungeon-btn:disabled { background:#444; cursor:not-allowed; color:#666; }
+.dungeon-btn { background:#f0c040; color:#1c1b29; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:bold; transition:all 0.15s; }
+.dungeon-btn:hover { background:#f5d060; }
+.dungeon-btn:disabled { background:#3d3556; cursor:not-allowed; color:#666; }
 .dungeon-log p { margin:2px 0; }
 
 /* ============================== */
@@ -254,7 +283,7 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 .battle-team { display:flex; flex-direction:column; gap:4px; padding:6px 4px; }
 .enemy-team { background:rgba(239,83,80,0.04); border-radius:10px 10px 0 0; }
 .ally-team { background:rgba(76,175,80,0.04); border-radius:0 0 10px 10px; }
-.battle-vs { display:flex; align-items:center; justify-content:center; gap:8px; font-size:16px; font-weight:bold; color:#e94560; padding:6px 0; text-shadow:0 0 8px rgba(233,69,96,0.5); background:linear-gradient(90deg, transparent, rgba(233,69,96,0.08), transparent); }
+.battle-vs { display:flex; align-items:center; justify-content:center; gap:8px; font-size:16px; font-weight:bold; color:#f0c040; padding:6px 0; text-shadow:0 0 8px rgba(240,192,64,0.5); background:linear-gradient(90deg, transparent, rgba(240,192,64,0.08), transparent); }
 .vs-text { font-size:14px; letter-spacing:4px; }
 .team-label { font-size:12px; font-weight:bold; color:#888; text-align:center; margin:2px 0; }
 .enemy-label { color:#ef5350; }
@@ -265,11 +294,11 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 .formation-row.back-row { opacity:0.85; }
 
 /* 单位卡片 - 竖版 */
-.battle-unit-card { display:flex; flex-direction:column; align-items:center; gap:3px; background:rgba(255,255,255,0.05); border-radius:8px; padding:6px 4px; position:relative; transition:opacity 0.3s, transform 0.2s; border:1px solid rgba(255,255,255,0.08); text-align:center; min-height:120px; }
+.battle-unit-card { display:flex; flex-direction:column; align-items:center; gap:3px; background:rgba(240,192,64,0.03); border-radius:8px; padding:6px 4px; position:relative; transition:opacity 0.3s, transform 0.2s; border:1px solid #2e2a42; text-align:center; min-height:120px; }
 .battle-unit-card.dead { opacity:0.3; }
-.battle-unit-card.enemy { border-color:rgba(239,83,80,0.15); }
-.battle-unit-card.ally { border-color:rgba(76,175,80,0.15); }
-.battle-unit-card.empty-slot { background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.06); min-height:120px; }
+.battle-unit-card.enemy { border-color:rgba(239,83,80,0.2); }
+.battle-unit-card.ally { border-color:rgba(76,175,80,0.2); }
+.battle-unit-card.empty-slot { background:rgba(255,255,255,0.02); border:1px dashed #3d3556; min-height:120px; }
 
 /* 精灵头像容器 - 更大 */
 .unit-sprite-wrap { flex-shrink:0; display:flex; align-items:center; justify-content:center; width:72px; height:72px; background:rgba(0,0,0,0.25); border-radius:8px; overflow:hidden; }
@@ -294,9 +323,9 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 
 /* 技能圆点 */
 .unit-skill-row { display:flex; gap:3px; justify-content:center; margin-top:2px; }
-.skill-dot { width:18px; height:18px; border-radius:50%; background:rgba(233,69,96,0.2); color:#e94560; font-size:9px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:default; transition:all 0.2s; border:1px solid rgba(233,69,96,0.3); }
+.skill-dot { width:18px; height:18px; border-radius:50%; background:rgba(240,192,64,0.2); color:#f0c040; font-size:9px; font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:default; transition:all 0.2s; border:1px solid rgba(240,192,64,0.3); }
 .skill-dot.on-cd { background:rgba(255,255,255,0.04); color:#666; border-color:rgba(255,255,255,0.1); }
-.skill-dot:hover { background:rgba(233,69,96,0.35); transform:scale(1.15); }
+.skill-dot:hover { background:rgba(240,192,64,0.35); transform:scale(1.15); }
 
 /* 状态效果图标 */
 .unit-status-row { display:flex; gap:2px; justify-content:center; flex-wrap:wrap; margin-top:1px; }
@@ -320,9 +349,9 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 }
 
 /* 保留旧 skill-tag 供其他UI使用 */
-.skill-tag { font-size:10px; padding:1px 6px; background:rgba(233,69,96,0.12); border-radius:4px; color:#e94560; cursor:default; white-space:nowrap; transition:background 0.2s; }
+.skill-tag { font-size:10px; padding:1px 6px; background:rgba(240,192,64,0.12); border-radius:4px; color:#f0c040; cursor:default; white-space:nowrap; transition:background 0.2s; }
 .skill-tag.on-cd { color:#666; background:rgba(255,255,255,0.04); }
-.skill-tag:hover { background:rgba(233,69,96,0.25); }
+.skill-tag:hover { background:rgba(240,192,64,0.25); }
 
 /* ===== 像素精灵 ===== */
 .sprite-container { display:inline-block; image-rendering:pixelated; line-height:0; }
@@ -345,21 +374,21 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 }
 
 /* ===== Tooltip 悬浮提示 ===== */
-.game-tooltip { position:fixed; z-index:9999; background:#1a1a2e; border:1px solid #e94560; border-radius:8px; padding:10px 14px; max-width:280px; font-size:12px; line-height:1.5; color:#e0e0e0; pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,0.5); }
-.tip-title { font-size:13px; font-weight:bold; color:#e94560; margin-bottom:4px; border-bottom:1px solid rgba(233,69,96,0.2); padding-bottom:4px; }
+.game-tooltip { position:fixed; z-index:9999; background:#211e30; border:1px solid #f0c040; border-radius:8px; padding:10px 14px; max-width:280px; font-size:12px; line-height:1.5; color:#e8e0d4; pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,0.5); }
+.tip-title { font-size:13px; font-weight:bold; color:#f0c040; margin-bottom:4px; border-bottom:1px solid rgba(240,192,64,0.2); padding-bottom:4px; }
 .tip-row { color:#ccc; padding:1px 0; }
 .tip-desc { margin-top:4px; color:#ff9800; font-size:11px; font-style:italic; }
 
 /* ===== 符文界面 - 工具栏 ===== */
 .rune-toolbar { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
 .rune-pet-selector { display:flex; gap:4px; flex-wrap:wrap; }
-.pet-select-btn { padding:5px 10px; border:1px solid #333; background:#1a1a2e; color:#aaa; border-radius:6px; cursor:pointer; font-size:12px; transition:all .2s; white-space:nowrap; }
-.pet-select-btn:hover { border-color:#e94560; color:#e0e0e0; }
-.pet-select-btn.active { border-color:#e94560; color:#e94560; background:rgba(233,69,96,0.1); }
+.pet-select-btn { padding:5px 10px; border:1px solid #3d3556; background:#2a2040; color:#9a90b0; border-radius:6px; cursor:pointer; font-size:12px; transition:all .2s; white-space:nowrap; }
+.pet-select-btn:hover { border-color:#f0c040; color:#e8e0d4; }
+.pet-select-btn.active { border-color:#f0c040; color:#f0c040; background:rgba(240,192,64,0.1); }
 .rune-sort-bar { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
-.sort-btn { padding:4px 10px; border:1px solid #333; background:#1a1a2e; color:#aaa; border-radius:4px; cursor:pointer; font-size:11px; transition:all .2s; }
-.sort-btn:hover { border-color:#666; color:#e0e0e0; }
-.sort-btn.active { border-color:#e94560; color:#e94560; }
+.sort-btn { padding:4px 10px; border:1px solid #3d3556; background:#2a2040; color:#9a90b0; border-radius:4px; cursor:pointer; font-size:11px; transition:all .2s; }
+.sort-btn:hover { border-color:#f0c040; color:#e8e0d4; }
+.sort-btn.active { border-color:#f0c040; color:#f0c040; }
 
 /* ===== 符文装配面板 ===== */
 .equip-panel { background:rgba(255,255,255,0.03); border-radius:10px; padding:12px; }
@@ -367,14 +396,14 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 
 /* 6槽位网格 */
 .equip-slot-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
-.equip-slot { background:rgba(255,255,255,0.04); border-radius:8px; padding:10px; text-align:center; min-height:90px; border:2px solid #333; cursor:pointer; transition:all .2s; position:relative; }
-.equip-slot:hover { border-color:#666; background:rgba(255,255,255,0.07); }
+.equip-slot { background:rgba(240,192,64,0.03); border-radius:8px; padding:10px; text-align:center; min-height:90px; border:2px solid #3d3556; cursor:pointer; transition:all .2s; position:relative; }
+.equip-slot:hover { border-color:#f0c040; background:rgba(240,192,64,0.06); }
 .equip-slot.filled { border-style:solid; }
 .equip-slot.empty { border-style:dashed; }
 .slot-header { font-size:11px; color:#888; margin-bottom:4px; }
 .slot-set { font-size:12px; font-weight:bold; margin-bottom:2px; }
 .slot-main { font-size:14px; font-weight:bold; color:#ffca28; }
-.slot-level { font-size:11px; color:#e94560; margin-top:2px; }
+.slot-level { font-size:11px; color:#f0c040; margin-top:2px; }
 .slot-empty-text { font-size:12px; color:#555; margin:8px 0 4px; }
 .slot-empty-hint { font-size:10px; color:#444; }
 .slot-actions { display:flex; gap:4px; justify-content:center; margin-top:6px; }
@@ -392,20 +421,20 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 
 /* 符文背包列表 */
 .rune-bag-list { display:flex; flex-direction:column; gap:6px; }
-.rune-card.selected { background:rgba(233,69,96,0.12); border:1px solid #e94560; }
-.pet-card.selected { background:rgba(233,69,96,0.12); border-color:#e94560; }
-.treasure-card.selected { background:rgba(233,69,96,0.12); }
+.rune-card.selected { background:rgba(240,192,64,0.12); border:1px solid #f0c040; }
+.pet-card.selected { background:rgba(240,192,64,0.12); border-color:#f0c040; }
+.treasure-card.selected { background:rgba(240,192,64,0.12); }
 
 /* 批量操作底栏 */
-.batch-bar { position:sticky; bottom:0; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#16213e,#0f3460); border-radius:8px; padding:10px 14px; margin-top:8px; font-size:13px; border:1px solid rgba(233,69,96,0.3); }
+.batch-bar { position:sticky; bottom:0; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#2a2040,#1e1838); border-radius:8px; padding:10px 14px; margin-top:8px; font-size:13px; border:1px solid rgba(240,192,64,0.3); }
 
 /* ===== 技能装备管理面板 ===== */
 .skill-equip-slot {
   padding:8px 10px; margin:4px 0; border-radius:6px; display:flex; align-items:center; gap:8px;
-  background:rgba(255,255,255,0.06); border-left:4px solid #555; transition:all 0.2s;
+  background:rgba(240,192,64,0.04); border-left:4px solid #3d3556; transition:all 0.2s;
 }
-.skill-equip-slot:hover { background:rgba(255,255,255,0.10); }
-.skill-equip-slot.empty { background:rgba(255,255,255,0.02); border:1px dashed #444; border-left:4px dashed #444; }
+.skill-equip-slot:hover { background:rgba(240,192,64,0.08); }
+.skill-equip-slot.empty { background:rgba(255,255,255,0.02); border:1px dashed #3d3556; border-left:4px dashed #3d3556; }
 .skill-equip-slot .slot-label { font-size:18px; min-width:24px; text-align:center; flex-shrink:0; }
 .skill-equip-slot .slot-info { flex:1; min-width:0; }
 .skill-equip-slot .slot-info .skill-name { font-weight:bold; font-size:13px; }
@@ -415,9 +444,9 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 
 .skill-book-item {
   padding:8px 10px; margin:3px 0; border-radius:6px; display:flex; align-items:center; gap:8px;
-  background:rgba(255,255,255,0.03); border-left:3px solid #555; transition:all 0.2s; cursor:default;
+  background:rgba(240,192,64,0.03); border-left:3px solid #3d3556; transition:all 0.2s; cursor:default;
 }
-.skill-book-item:hover { background:rgba(255,255,255,0.07); }
+.skill-book-item:hover { background:rgba(240,192,64,0.07); }
 .skill-book-item.equipped { background:rgba(76,175,80,0.08); }
 .skill-book-item .skill-info { flex:1; min-width:0; }
 .skill-book-item .skill-info .skill-name { font-weight:bold; font-size:12px; }
@@ -427,15 +456,15 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 
 /* 技能书筛选工具栏 */
 .skill-filter-bar { display:flex; gap:4px; flex-wrap:wrap; margin:6px 0; }
-.skill-filter-btn { padding:3px 8px; border:1px solid #444; background:rgba(255,255,255,0.05); color:#aaa; border-radius:4px; cursor:pointer; font-size:10px; transition:all 0.2s; }
-.skill-filter-btn:hover { border-color:#888; color:#e0e0e0; }
-.skill-filter-btn.active { border-color:#e94560; color:#e94560; background:rgba(233,69,96,0.1); }
+.skill-filter-btn { padding:3px 8px; border:1px solid #3d3556; background:rgba(240,192,64,0.04); color:#9a90b0; border-radius:4px; cursor:pointer; font-size:10px; transition:all 0.2s; }
+.skill-filter-btn:hover { border-color:#f0c040; color:#e8e0d4; }
+.skill-filter-btn.active { border-color:#f0c040; color:#f0c040; background:rgba(240,192,64,0.1); }
 
 /* 战斗日志过滤按钮 */
 .log-filter-bar { display:flex; gap:3px; flex-wrap:wrap; margin-bottom:4px; }
-.log-filter-btn { padding:2px 8px; border:1px solid #333; background:rgba(255,255,255,0.04); color:#888; border-radius:4px; cursor:pointer; font-size:10px; transition:all 0.15s; }
-.log-filter-btn:hover { border-color:#666; color:#ccc; }
-.log-filter-btn.active { border-color:#e94560; color:#e94560; }
+.log-filter-btn { padding:2px 8px; border:1px solid #3d3556; background:rgba(240,192,64,0.03); color:#7a7090; border-radius:4px; cursor:pointer; font-size:10px; transition:all 0.15s; }
+.log-filter-btn:hover { border-color:#f0c040; color:#e8e0d4; }
+.log-filter-btn.active { border-color:#f0c040; color:#f0c040; }
 
 /* ===== 移动端适配 ===== */
 @media (max-width: 600px) {
@@ -469,7 +498,7 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
   position:relative; overflow:hidden;
 }
 .map-zone-card:hover { background:rgba(255,255,255,0.08); transform:translateY(-2px); }
-.map-zone-card.active { border-color:#e94560; background:rgba(233,69,96,0.08); }
+.map-zone-card.active { border-color:#f0c040; background:rgba(240,192,64,0.08); }
 .map-zone-card.locked { opacity:0.5; cursor:not-allowed; }
 .map-zone-card.locked:hover { transform:none; }
 
@@ -479,7 +508,7 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
 .map-zone-name { font-size:14px; font-weight:bold; color:#e0e0e0; }
 .map-zone-lv { font-size:11px; color:#888; }
 .map-zone-badge {
-  background:#e94560; color:#fff; font-size:10px; padding:2px 8px;
+  background:#f0c040; color:#1c1b29; font-size:10px; padding:2px 8px;
   border-radius:10px; font-weight:bold;
 }
 .map-zone-desc { font-size:11px; color:#999; margin-bottom:8px; }
@@ -506,7 +535,7 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
   flex:1; padding:8px 4px; background:rgba(255,255,255,0.05); border:none; color:#aaa;
   font-size:13px; border-radius:8px; cursor:pointer; transition:all 0.2s;
 }
-.garden-tab-btn.active { background:rgba(233,69,96,0.15); color:#e94560; font-weight:bold; }
+.garden-tab-btn.active { background:rgba(240,192,64,0.15); color:#f0c040; font-weight:bold; }
 
 .decomp-list { display:flex; flex-direction:column; gap:4px; margin-top:8px; max-height:400px; overflow-y:auto; }
 .decomp-item {
@@ -514,15 +543,138 @@ body { font-family: 'Microsoft YaHei','PingFang SC',sans-serif; background:#1a1a
   background:rgba(255,255,255,0.04); border-radius:6px; cursor:pointer; transition:all 0.15s;
 }
 .decomp-item:hover { background:rgba(255,255,255,0.08); }
-.decomp-item.selected { background:rgba(233,69,96,0.12); border:1px solid rgba(233,69,96,0.3); }
+.decomp-item.selected { background:rgba(240,192,64,0.12); border:1px solid rgba(240,192,64,0.3); }
 .decomp-item-left { display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
 .decomp-check { font-size:16px; color:#888; min-width:20px; }
-.decomp-item.selected .decomp-check { color:#e94560; }
+.decomp-item.selected .decomp-check { color:#f0c040; }
 .decomp-name { font-size:13px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .decomp-apt { font-size:11px; color:#888; white-space:nowrap; }
 .decomp-gold { font-size:12px; color:#ffd700; font-weight:bold; white-space:nowrap; margin-left:8px; }
 
 .decomp-bottom-bar {
   display:flex; justify-content:space-between; align-items:center; padding:10px 12px;
-  background:rgba(233,69,96,0.1); border-radius:8px; margin-top:10px; font-size:13px; color:#ddd;
+  background:rgba(240,192,64,0.1); border-radius:8px; margin-top:10px; font-size:13px; color:#e8e0d4;
+}
+
+/* ===== Phase3: Animations & Visual Polish ===== */
+
+/* --- Panel fade-in transition --- */
+.panel { animation:none; }
+.panel.active { animation:panelFadeIn 0.25s ease-out; }
+@keyframes panelFadeIn {
+  0% { opacity:0; transform:translateY(8px); }
+  100% { opacity:1; transform:translateY(0); }
+}
+
+/* --- List item stagger (pet cards, rune cards, decomp items, map cards) --- */
+.pet-card, .rune-card, .decomp-item, .map-zone-card, .dungeon-floor, .garden-slot {
+  animation:itemSlideIn 0.3s ease-out both;
+}
+@keyframes itemSlideIn {
+  0% { opacity:0; transform:translateY(10px); }
+  100% { opacity:1; transform:translateY(0); }
+}
+/* Stagger delays via nth-child */
+.pet-card:nth-child(2) { animation-delay:0.03s; }
+.pet-card:nth-child(3) { animation-delay:0.06s; }
+.pet-card:nth-child(4) { animation-delay:0.09s; }
+.pet-card:nth-child(5) { animation-delay:0.12s; }
+.pet-card:nth-child(n+6) { animation-delay:0.15s; }
+.rune-card:nth-child(2) { animation-delay:0.03s; }
+.rune-card:nth-child(3) { animation-delay:0.06s; }
+.rune-card:nth-child(4) { animation-delay:0.09s; }
+.rune-card:nth-child(n+5) { animation-delay:0.12s; }
+.map-zone-card:nth-child(2) { animation-delay:0.05s; }
+.map-zone-card:nth-child(3) { animation-delay:0.10s; }
+.map-zone-card:nth-child(4) { animation-delay:0.15s; }
+.map-zone-card:nth-child(n+5) { animation-delay:0.20s; }
+
+/* --- Button press effect (ripple-like scale) --- */
+.btn-sm, .tab-btn, .zone-btn, .skill-filter-btn, .log-filter-btn, .sort-btn, .pet-select-btn, .garden-tab-btn {
+  transition:all 0.15s ease;
+}
+.btn-sm:active, .tab-btn:active, .zone-btn:active, .skill-filter-btn:active,
+.log-filter-btn:active, .sort-btn:active, .pet-select-btn:active, .garden-tab-btn:active {
+  transform:scale(0.93);
+}
+
+/* --- Gold collect animation (on header gold) --- */
+.gold-flash { animation:goldPulse 0.5s ease-out; }
+@keyframes goldPulse {
+  0% { color:#ffd700; text-shadow:0 0 8px rgba(255,215,0,0.8); transform:scale(1.15); }
+  100% { color:inherit; text-shadow:none; transform:scale(1); }
+}
+
+/* --- Battle: skill cast glow --- */
+.skill-cast-glow { animation:skillGlow 0.5s ease-out; }
+@keyframes skillGlow {
+  0% { box-shadow:0 0 0 0 rgba(240,192,64,0.6); }
+  50% { box-shadow:0 0 15px 5px rgba(240,192,64,0.3); }
+  100% { box-shadow:none; }
+}
+
+/* --- Battle: unit death animation --- */
+.unit-dead { animation:unitDeath 0.6s ease-in forwards; pointer-events:none; }
+@keyframes unitDeath {
+  0% { opacity:1; transform:scale(1); filter:brightness(1); }
+  40% { opacity:0.8; filter:brightness(1.5) saturate(0); }
+  100% { opacity:0.2; transform:scale(0.8) translateY(5px); filter:brightness(0.5) saturate(0); }
+}
+
+/* --- Battle: victory flash --- */
+.victory-flash { animation:victoryBurst 0.8s ease-out; }
+@keyframes victoryBurst {
+  0% { background:rgba(255,215,0,0.3); }
+  50% { background:rgba(255,215,0,0.1); }
+  100% { background:transparent; }
+}
+
+/* --- Loot drop pop-in --- */
+.loot-pop { animation:lootPop 0.4s cubic-bezier(0.18,0.89,0.32,1.28); }
+@keyframes lootPop {
+  0% { opacity:0; transform:scale(0.3) translateY(-20px); }
+  70% { transform:scale(1.1) translateY(0); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+
+/* --- Toast enhanced with slide + bounce --- */
+.toast { animation:toastSlideIn 0.35s cubic-bezier(0.18,0.89,0.32,1.28); }
+@keyframes toastSlideIn {
+  0% { transform:translateX(120%); opacity:0; }
+  100% { transform:translateX(0); opacity:1; }
+}
+
+/* --- Vigor bar shimmer when low --- */
+.map-vigor-fill.depleted {
+  animation:vigorWarn 1.5s ease-in-out infinite;
+}
+@keyframes vigorWarn {
+  0%,100% { opacity:1; }
+  50% { opacity:0.5; }
+}
+
+/* --- VS divider pulse during battle --- */
+.battle-vs { animation:vsPulse 2s ease-in-out infinite; }
+@keyframes vsPulse {
+  0%,100% { opacity:0.7; }
+  50% { opacity:1; }
+}
+
+/* --- Capture success burst --- */
+.capture-success { animation:captureBurst 0.6s ease-out; }
+@keyframes captureBurst {
+  0% { box-shadow:0 0 0 0 rgba(76,175,80,0.6); background:rgba(76,175,80,0.2); }
+  100% { box-shadow:0 0 20px 10px rgba(76,175,80,0); background:transparent; }
+}
+
+/* --- Smooth HP bar color transition --- */
+.unit-hp-fill, .battle-unit .unit-hp-fill {
+  transition:width 0.4s ease, background 0.3s ease;
+}
+
+/* --- Heal flash on unit card --- */
+.heal-flash { animation:healGlow 0.5s ease-out; }
+@keyframes healGlow {
+  0% { box-shadow:0 0 12px 4px rgba(76,175,80,0.6); }
+  100% { box-shadow:none; }
 }
