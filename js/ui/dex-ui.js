@@ -3,6 +3,7 @@ import { SPECIES, ELEM_CHART } from '../constants/index.js';
 import { gameState } from '../state.js';
 import { showModal, showToast } from '../utils.js';
 import { createPet } from '../systems/pet.js';
+import { pauseBattle, resumeBattle } from '../systems/capture.js';
 import { renderHeader } from './header-ui.js';
 
 export function renderDex() {
@@ -58,13 +59,17 @@ window._captureReserve = function(idx) {
   const item = gameState.reserve[idx];
   if (!item) return;
   const sp = SPECIES[item.speciesId];
+
+  // 暂停主战斗，避免高倍速干扰捕捉
+  pauseBattle();
+
   showModal('保留栏捕捉',
     '<p>捕捉 ' + (item.displayName || sp.name) + ' Lv.' + item.level + '?</p>'
     + '<p>IV: ' + item.ivs.hp + '/' + item.ivs.atk + '/' + item.ivs.def + '/' + item.ivs.spd + '</p>'
     + '<p style="font-size:12px;color:#888;">消耗1灵魂石，成功率70%</p>',
     [
       { text: '捕捉', primary: true, action: () => {
-        if (gameState.materials.soul_stone < 1) { showToast('灵魂石不足', 'info'); return; }
+        if (gameState.materials.soul_stone < 1) { showToast('灵魂石不足', 'info'); resumeBattle(); return; }
         gameState.materials.soul_stone--;
         if (Math.random() * 100 < 70) {
           const newPet = createPet(item.speciesId, 1, false, item.ivs);
@@ -78,8 +83,10 @@ window._captureReserve = function(idx) {
         }
         renderReserve();
         renderHeader();
+        // 恢复原战斗倍速
+        resumeBattle();
       }},
-      { text: '取消', action: null }
+      { text: '取消', action: () => { resumeBattle(); } }
     ]
   );
 };

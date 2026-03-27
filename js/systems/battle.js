@@ -350,6 +350,10 @@ function unitTakeTurn(unit) {
 let _renderBattle = null;
 export function setBattleRenderer(fn) { _renderBattle = fn; }
 
+// 渲染节流：高倍速时UI最多每200ms刷新一次，避免DOM重建太快导致按钮点不到
+let _lastRenderTime = 0;
+const RENDER_MIN_INTERVAL = 200; // ms
+
 export function battleTick() {
   if (gameState.enemies.length === 0) return;
 
@@ -389,7 +393,14 @@ export function battleTick() {
     handleDefeat();
   }
 
-  if (_renderBattle) _renderBattle();
+  // 节流渲染：高倍速时不要每tick都重建DOM
+  if (_renderBattle) {
+    const renderNow = Date.now();
+    if (renderNow - _lastRenderTime >= RENDER_MIN_INTERVAL) {
+      _lastRenderTime = renderNow;
+      _renderBattle();
+    }
+  }
 }
 
 // ===== 胜利处理 =====

@@ -93,7 +93,7 @@ function initGame() {
         case 'pets': renderPets(); break;
         case 'formation': renderFormation(); break;
         case 'treasure': renderTreasure(); break;
-        case 'dex': renderDex(); break;
+        case 'dex': renderDex(); renderReserve(); break;
         case 'shop': renderShop(); break;
         case 'garden': renderGarden(); break;
       }

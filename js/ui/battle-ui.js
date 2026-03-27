@@ -4,6 +4,7 @@ import { gameState, getFormationPets } from '../state.js';
 import { calcCaptureRate, attemptCapture, pauseBattle, resumeBattle } from '../systems/capture.js';
 import { spawnEnemies } from '../systems/battle.js';
 import { renderHeader } from './header-ui.js';
+import { renderReserve } from './dex-ui.js';
 import { showModal, closeModal } from '../utils.js';
 
 // Capture item picker
@@ -63,6 +64,7 @@ export function renderZoneSelector() {
 
 export function renderBattle() {
   renderHeader();
+  renderReserve();
 
   // === 敌方 ===
   const enemyEl = document.getElementById('enemy-side');
